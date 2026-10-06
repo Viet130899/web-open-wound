@@ -8,6 +8,9 @@ AI models live inside this app's own "ai model/" folder:
   ai model/block3/         — Block 3 LLM chatbot adapters
 Runs on port 8001.
 
+Login credentials are read from OW_USER / OW_PASS / OW_SECRET (environment or
+a local .env file — copy .env.example to .env).
+
 Start:
     lsof -ti:8001 | xargs kill -9 2>/dev/null; ~/anaconda3/envs/block2/bin/python app.py
 """
@@ -53,9 +56,29 @@ CHATBOT_MODELS_DIR = AI_MODEL_DIR / "block3"
 DETECT_CHECKPOINT = DETECT_DIR / "best.pt"
 SEG_CHECKPOINT    = SEG_DIR / "checkpoints" / "best.pt"
 
-USERNAME   = os.environ.get("OW_USER",   "dev team")
-PASSWORD   = os.environ.get("OW_PASS",   "12345678")
-SECRET_KEY = os.environ.get("OW_SECRET", "ow-change-this-to-a-random-secret")
+def _load_env_file(path: Path):
+    """Load KEY=VALUE lines from a local .env file (not committed) into os.environ."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+
+
+_load_env_file(BASE_DIR / ".env")
+
+# Credentials must come from the environment or .env — no hard-coded defaults.
+USERNAME   = os.environ.get("OW_USER", "").strip()
+PASSWORD   = os.environ.get("OW_PASS", "")
+SECRET_KEY = os.environ.get("OW_SECRET", "")
+if not USERNAME or len(PASSWORD) < 8 or len(SECRET_KEY) < 32:
+    sys.exit(
+        "ERROR: set OW_USER, OW_PASS (>= 8 chars) and OW_SECRET (>= 32 chars) "
+        "in the environment or in a .env file next to app.py (see .env.example)."
+    )
 
 IMG_EXTS   = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif"}
 VIDEO_EXTS = {".mp4", ".webm", ".mov", ".avi", ".mkv"}
@@ -131,7 +154,9 @@ def login_page(error: int = 0):
 
 @app.post("/login")
 def login_submit(request: Request, username: str = Form(""), password: str = Form("")):
-    if secrets.compare_digest(username, USERNAME) and secrets.compare_digest(password, PASSWORD):
+    user_ok = secrets.compare_digest(username.encode(), USERNAME.encode())
+    pass_ok = secrets.compare_digest(password.encode(), PASSWORD.encode())
+    if user_ok and pass_ok:
         request.session["authed"] = True
         return RedirectResponse("/", status_code=303)
     return RedirectResponse("/login?error=1", status_code=303)
@@ -1048,7 +1073,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print(">>> Open Wound Monitor — server is running.")
     print(">>> Open in your browser: http://localhost:8001")
-    print(f">>> Login -> username: {USERNAME}   password: {PASSWORD}")
+    print(f">>> Login -> username: {USERNAME}   (password from OW_PASS / .env)")
     print("=" * 60)
     print(f">>> Data folder:  {OW_IMG_DIR}")
     print(f">>> AI models:    {AI_MODEL_DIR}")

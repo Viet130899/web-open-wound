@@ -59,10 +59,12 @@ tự động tải từ Hugging Face vào `ai model/block3/.hf_cache/` trong l�
 
 ## Chạy
 
+Tạo file `.env` từ file mẫu và điền tài khoản đăng nhập (file `.env` không bao giờ được đưa lên GitHub):
+
 ```bash
-export OW_USER="ten_dang_nhap"
-export OW_PASS="mat_khau_manh"
-export OW_SECRET="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+cp .env.example .env
+# sửa OW_USER, OW_PASS (>= 8 ký tự) trong .env, rồi tạo OW_SECRET:
+python -c "import secrets; print(secrets.token_hex(32))"
 
 python app.py
 ```
@@ -70,8 +72,8 @@ python app.py
 Mở trình duyệt tại **http://localhost:8001** và đăng nhập. Chatbot được bật từ giao diện
 (nút khởi chạy model); log nằm trong `data/model_<id>.log`.
 
-> ⚠️ Nếu không đặt các biến `OW_USER`, `OW_PASS`, `OW_SECRET`, ứng dụng dùng giá trị mặc định
-> trong `app.py` — **luôn đặt lại** khi chạy trên mạng hoặc công khai ra internet.
+> Ứng dụng **không có mật khẩu mặc định**: nếu thiếu `OW_USER`, `OW_PASS` hoặc `OW_SECRET`
+> (trong `.env` hoặc biến môi trường) thì server sẽ báo lỗi và không khởi động.
 
 ## Dữ liệu
 
