@@ -1,0 +1,17 @@
+# Dữ liệu (không đưa lên GitHub)
+data/
+
+# Cache model Hugging Face (base model ~6GB, tự tải lại khi chạy)
+.hf_cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Hệ điều hành / editor
+.DS_Store
+.vscode/
+.idea/

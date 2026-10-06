@@ -1,0 +1,24 @@
+fastapi
+uvicorn[standard]
+itsdangerous
+python-multipart
+Pillow
+ultralytics
+opencv-python
+numpy<2
+
+# torch on Jetson Orin (JetPack 6 / L4T R36.x, CUDA 12.6) needs NVIDIA's own
+# aarch64 build, not the generic PyPI wheel (which has no CUDA kernels for
+# the Tegra GPU). Install separately:
+#   pip install torch==2.8.0 --index-url https://pypi.jetson-ai-lab.io/jp6/cu126
+# Also requires the `cuda-cupti-12-6` apt package (libcupti.so.12) if missing:
+#   sudo apt-get install -y cuda-cupti-12-6
+
+# Block 3 chatbot (HuggingFace transformers + PEFT LoRA, replaces the
+# Apple-only MLX pipeline — MLX's CUDA backend has no kernels for Orin's GPU)
+transformers
+peft
+accelerate
+safetensors
+huggingface_hub
+sentencepiece

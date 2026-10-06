@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Open Wound Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f4f8;
+  --surface:#ffffff;
+  --surface2:#f8fafc;
+  --border:#e2e8f0;
+  --border2:#cbd5e1;
+  --text:#0f172a;
+  --text2:#334155;
+  --muted:#64748b;
+  --teal:#4f46e5;
+  --teal-light:#ede9fe;
+  --teal-mid:#a78bfa;
+  --green:#16a34a;
+  --green-light:#dcfce7;
+  --amber:#d97706;
+  --amber-light:#fef3c7;
+  --orange:#ea580c;
+  --orange-light:#ffedd5;
+  --red:#dc2626;
+  --red-light:#fee2e2;
+  --red2:#b91c1c;
+  --shadow-sm:0 1px 3px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.05);
+  --shadow:0 4px 6px -1px rgba(15,23,42,.08),0 2px 4px -2px rgba(15,23,42,.05);
+  --shadow-lg:0 10px 15px -3px rgba(15,23,42,.09),0 4px 6px -4px rgba(15,23,42,.06);
+  --r:12px;
+  --r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:"Inter",system-ui,sans-serif;line-height:1.5;overflow:hidden;}
+.mono{font-family:"JetBrains Mono",monospace;}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}60%{box-shadow:0 0 0 12px rgba(220,38,38,0);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+@keyframes needleDrop{from{transform-origin:100px 96px;transform:rotate(-90deg);opacity:0;}to{transform-origin:100px 96px;transform:rotate(0deg);opacity:1;}}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+
+.anim-fade-up{animation:fadeUp .4s ease both;}
+.anim-fade-up-1{animation:fadeUp .4s .05s ease both;}
+.anim-fade-up-2{animation:fadeUp .4s .10s ease both;}
+.anim-fade-up-3{animation:fadeUp .4s .15s ease both;}
+
+/* ── Top nav ──────────────────────────────────────────────────────────────── */
+.topnav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:4px;height:52px;box-shadow:var(--shadow-sm);}
+.brand{font-size:16px;font-weight:700;color:var(--text);margin-right:6px;letter-spacing:-.02em;}
+.brand .accent{color:var(--teal);}
+.sep{width:1px;height:20px;background:var(--border2);margin:0 4px;}
+.sp{flex:1;}
+a.navlink{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:7px;transition:all .15s;}
+a.navlink:hover{color:var(--text);background:var(--bg);}
+a.navlink.active{color:var(--teal);background:var(--teal-light);}
+a.navlink.logout{color:var(--muted);}
+a.navlink.logout:hover{color:var(--red);background:var(--red-light);}
+.lang-btn{background:var(--surface2);border:1.5px solid var(--border2);color:var(--text2);font-size:12px;font-weight:600;padding:4px 11px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .18s;letter-spacing:.01em;white-space:nowrap;}
+.lang-btn:hover{border-color:var(--teal);color:var(--teal);}
+
+/* ── Page ─────────────────────────────────────────────────────────────────── */
+.page{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+.main{flex:1;overflow-y:auto;padding:18px 20px 60px;min-width:0;scroll-behavior:smooth;}
+.main::-webkit-scrollbar{width:5px;}
+.main::-webkit-scrollbar-track{background:transparent;}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);margin-bottom:14px;overflow:hidden;}
+.card-pad{padding:16px 18px;}
+.card-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;}
+
+/* ── Patient card ─────────────────────────────────────────────────────────── */
+.pt-card{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);border:none;border-radius:var(--r);box-shadow:var(--shadow-lg);padding:18px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;}
+.pt-card::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='25'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;}
+.pt-card::after{content:"";position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none;}
+.pt-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;backdrop-filter:blur(4px);}
+.pt-info{flex:1;min-width:180px;position:relative;}
+.pt-name{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:-.01em;}
+.pt-meta{font-size:12.5px;color:rgba(255,255,255,.8);display:flex;gap:14px;flex-wrap:wrap;}
+.pt-meta b{color:#fff;font-weight:600;}
+.pt-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:11.5px;color:rgba(255,255,255,.9);}
+.pt-edit{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:var(--r-sm);padding:6px 14px;font-size:12.5px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap;position:relative;}
+.pt-edit:hover{background:rgba(255,255,255,.25);}
+
+/* ── Assessment ───────────────────────────────────────────────────────────── */
+.assess-grid{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;flex-wrap:wrap;}
+.gauge-col{flex-shrink:0;text-align:center;padding:4px;}
+.gauge-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;}
+.gauge-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:4px 14px;border-radius:20px;margin-top:4px;}
+.gauge-desc{font-size:11.5px;color:var(--muted);margin-top:5px;max-width:200px;}
+
+.stats-col{display:flex;flex-direction:column;gap:12px;}
+.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.size-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center;transition:box-shadow .2s;}
+.size-box:hover{box-shadow:var(--shadow);}
+.size-val{font-size:22px;font-weight:700;font-family:"JetBrains Mono",monospace;color:var(--teal);line-height:1.1;}
+.size-lbl{font-size:9.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;}
+
+.advice-card{border-radius:var(--r-sm);border:1px solid var(--border);padding:12px 14px;}
+.advice-head{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.advice-text{font-size:13px;color:var(--text2);line-height:1.6;}
+
+/* ── Session tabs ─────────────────────────────────────────────────────────── */
+.tabs-bar{display:flex;border-bottom:1px solid var(--border);padding:0 4px;background:var(--surface2);}
+.tab-btn{flex:1;padding:11px 6px;font-size:12.5px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:600;}
+.tab-btn.cam-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+.tab-content{display:none;padding:16px 18px;animation:fadeIn .25s ease;}
+.tab-content.active{display:block;}
+
+/* ── Session content ──────────────────────────────────────────────────────── */
+.sess-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.sess-date{font-size:15px;font-weight:600;flex:1;color:var(--text);}
+.grade-pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;padding:3px 12px;border-radius:20px;}
+.sess-meta{font-size:12px;color:var(--muted);}
+
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+.thumb-wrap{position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;background:var(--surface2);border:1.5px solid var(--border);transition:all .2s;}
+.thumb-wrap:hover{border-color:var(--teal);box-shadow:var(--shadow);}
+.thumb-wrap:hover .thumb-overlay{opacity:1;}
+.thumb-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;}
+.thumb-wrap:hover .thumb-img{transform:scale(1.06);}
+.thumb-overlay{position:absolute;inset:0;background:rgba(79,70,229,.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:22px;}
+
+.empty-folder{text-align:center;padding:28px 16px;}
+.empty-icon{font-size:36px;opacity:.35;margin-bottom:8px;}
+.empty-text{font-size:13px;color:var(--muted);margin-bottom:10px;}
+.folder-hint{display:inline-block;background:var(--surface2);border:1.5px dashed var(--border2);border-radius:var(--r-sm);padding:8px 14px;font-size:11.5px;color:var(--muted);font-family:"JetBrains Mono",monospace;word-break:break-all;}
+
+/* ── Camera tab ───────────────────────────────────────────────────────────── */
+.cam-body{display:flex;flex-direction:column;align-items:center;gap:16px;padding:8px 0;}
+.cam-start-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.cam-big-btn{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#c2410c);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(234,88,12,.35);font-size:36px;transition:all .2s;}
+.cam-big-btn:hover{transform:scale(1.07);box-shadow:0 12px 28px rgba(234,88,12,.45);}
+.cam-big-btn.recording{animation:pulse 1.5s infinite;background:linear-gradient(135deg,var(--red),var(--red2));}
+.cam-hint{font-size:13px;color:var(--muted);}
+.cam-video-wrap{width:100%;max-width:540px;background:#0f172a;border-radius:var(--r);overflow:hidden;aspect-ratio:16/9;position:relative;box-shadow:var(--shadow-lg);}
+.cam-video-wrap video{width:100%;height:100%;object-fit:contain;display:block;}
+.cam-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#475569;font-size:13px;gap:10px;}
+.cam-placeholder .ico{font-size:44px;opacity:.25;}
+.cam-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.rec-pill{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--red);font-weight:500;background:var(--red-light);border:1px solid #fca5a5;padding:4px 12px;border-radius:20px;}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite;}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn{padding:7px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;letter-spacing:-.01em;}
+.btn:hover{filter:brightness(.93);}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+.btn-teal{background:var(--teal);color:#fff;box-shadow:0 2px 6px rgba(79,70,229,.3);}
+.btn-outline{background:var(--surface);border:1.5px solid var(--border2);color:var(--text2);}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+.btn-orange{background:var(--orange-light);border:1.5px solid #fdba74;color:var(--orange);}
+.btn-red{background:var(--red-light);border:1.5px solid #fca5a5;color:var(--red);}
+.btn-sm{padding:4px 10px;font-size:11.5px;}
+
+/* ── Sidebar / Chat ───────────────────────────────────────────────────────── */
+.sidebar{width:330px;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--surface);will-change:width;}
+
+/* ── Column resize handles ───────────────────────────────────────────────── */
+.col-resize{width:5px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s;position:relative;z-index:10;user-select:none;-webkit-user-select:none;}
+.col-resize::after{content:"";position:absolute;top:0;bottom:0;left:-4px;right:-4px;}
+.col-resize:hover,.col-resize.dragging{background:var(--teal);opacity:.5;}
+
+/* Drag-to-resize handle — mobile only */
+.chat-resize-handle{display:none;padding:7px 0 4px;cursor:ns-resize;text-align:center;background:var(--surface);border-top:2px solid var(--border);flex-shrink:0;user-select:none;-webkit-user-select:none;touch-action:none;}
+.chat-resize-pill{width:38px;height:4px;background:var(--border2);border-radius:3px;margin:0 auto;transition:background .2s,transform .2s;}
+.chat-resize-hint{font-size:9.5px;color:var(--muted);margin-top:3px;opacity:0;transition:opacity .2s;letter-spacing:.02em;}
+.chat-resize-handle:hover .chat-resize-pill,.chat-resize-handle.dragging .chat-resize-pill{background:var(--teal);transform:scaleX(1.15);}
+.chat-resize-handle:hover .chat-resize-hint,.chat-resize-handle.dragging .chat-resize-hint{opacity:1;}
+@media(max-width:900px){.chat-resize-handle{display:block;}}
+.chat-hdr{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--surface);}
+.chat-hdr-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.chat-hdr-title{font-size:13.5px;font-weight:600;flex:1;color:var(--text);}
+.chat-online{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+
+.model-sel{background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:11.5px;padding:4px 8px;font-family:inherit;cursor:pointer;}
+.model-sel:focus{outline:none;border-color:var(--teal);}
+
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 12px;display:flex;flex-direction:column;gap:10px;}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+.msg{max-width:90%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.65;word-break:break-word;animation:fadeUp .2s ease;}
+.msg.user{background:linear-gradient(135deg,var(--teal),#7c3aed);color:#fff;border-radius:12px 12px 3px 12px;align-self:flex-end;box-shadow:0 2px 8px rgba(79,70,229,.25);}
+.msg.bot{background:var(--surface2);border:1px solid var(--border);border-radius:12px 12px 12px 3px;align-self:flex-start;color:var(--text2);}
+.msg.bot b{color:var(--teal);}
+
+/* Typing indicator */
+.typing-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);animation:dotBounce 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:.15s;}
+.typing-dot:nth-child(3){animation-delay:.3s;}
+
+.msg-model{font-size:10.5px;color:var(--muted);align-self:flex-start;margin-top:-7px;margin-left:6px;display:flex;align-items:center;gap:4px;}
+.model-badge{background:var(--teal-light);color:var(--teal);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;}
+
+.chat-suggs{padding:0 12px 8px;display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.sugg{background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-size:11.5px;padding:4px 10px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:all .18s;font-weight:500;}
+.sugg:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light);}
+
+.chat-bottom{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--surface2);}
+.chat-in{flex:1;background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:16px;padding:8px 11px;font-family:inherit;resize:none;max-height:88px;transition:border-color .18s;}
+.chat-in:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.chat-in::placeholder{color:var(--muted);}
+
+/* ── Modal ────────────────────────────────────────────────────────────────── */
+.modal-ov{position:fixed;inset:0;background:rgba(15,23,42,.4);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;z-index:50;padding:20px;padding-top:max(20px,env(safe-area-inset-top));animation:fadeIn .2s ease;}
+.modal-ov>.modal{margin:auto;}
+.modal-ov.hidden{display:none;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:3px;letter-spacing:-.02em;}
+.modal .msub{color:var(--muted);font-size:12.5px;margin-bottom:18px;}
+.mrow{margin-bottom:12px;}
+.mrow label{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:5px;}
+.mrow input{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:13.5px;padding:8px 11px;font-family:inherit;transition:border-color .18s;}
+.mrow input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.mrow-pair{display:flex;gap:8px;}
+.mrow-pair input{flex:1;}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+/* ── AI Analyze button on thumbnail ─────────────────────────────────────────── */
+.ai-analyze-btn{position:absolute;bottom:5px;right:5px;background:rgba(79,70,229,.9);
+  color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;
+  cursor:pointer;font-family:"JetBrains Mono",monospace;letter-spacing:.04em;z-index:3;
+  transition:background .15s;}
+.ai-analyze-btn:hover{background:var(--teal);}
+.ai-analyze-btn.loading{background:var(--amber);pointer-events:none;}
+
+/* ── Upload drop zone ────────────────────────────────────────────────────────── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--surface2);}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:var(--teal-light);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-zone-icon{margin-bottom:10px;opacity:.5;}
+.upload-zone-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px;}
+.upload-zone-sub{font-size:12px;color:var(--muted);}
+.cam-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px;font-weight:500;}
+.cam-divider::before,.cam-divider::after{content:"";flex:1;height:1px;background:var(--border2);}
+.video-player-wrap{background:#000;border-radius:var(--r-sm);overflow:hidden;max-width:480px;margin-bottom:10px;}
+.video-player-wrap video{width:100%;display:block;}
+
+/* ── Upload progress bar ─────────────────────────────────────────────────── */
+.upload-status{position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:80;
+  background:var(--surface);border:1.5px solid var(--border2);border-radius:12px;
+  box-shadow:var(--shadow-lg);padding:14px 20px;min-width:320px;max-width:90vw;
+  display:flex;flex-direction:column;gap:10px;animation:fadeUp .25s ease;}
+.upload-status.hidden{display:none;}
+.ustatus-title{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.ustatus-steps{display:flex;gap:0;align-items:center;}
+.ustatus-step{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:500;flex:1;}
+.ustatus-step.done{color:var(--green);}
+.ustatus-step.active{color:var(--teal);font-weight:600;}
+.ustatus-step-dot{width:20px;height:20px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;}
+.ustatus-step.done .ustatus-step-dot{background:var(--green);border-color:var(--green);color:#fff;}
+.ustatus-step.active .ustatus-step-dot{border-color:var(--teal);animation:pulse-teal 1s infinite;}
+.ustatus-connector{width:24px;height:2px;background:var(--border2);margin:0 4px;flex-shrink:0;}
+.ustatus-connector.done{background:var(--green);}
+.ustatus-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ustatus-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),#7c3aed);border-radius:2px;transition:width .5s ease;}
+@keyframes pulse-teal{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,.4);}60%{box-shadow:0 0 0 6px rgba(79,70,229,0);}}
+
+/* ── Lightbox ─────────────────────────────────────────────────────────────── */
+.lb{position:fixed;inset:0;background:rgba(15,23,42,.92);display:flex;align-items:center;justify-content:center;z-index:60;cursor:zoom-out;animation:fadeIn .2s ease;}
+.lb.hidden{display:none;}
+.lb img{max-width:92vw;max-height:92vh;border-radius:var(--r);object-fit:contain;box-shadow:var(--shadow-lg);}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r-sm);padding:8px 18px;font-size:13px;font-weight:500;z-index:100;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow-lg);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:#86efac;color:var(--green);}
+.toast.err{border-color:#fca5a5;color:var(--red);}
+.toast.info{border-color:var(--teal-mid);color:var(--teal);}
+
+/* ── Section label ────────────────────────────────────────────────────────── */
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:8px;padding-left:2px;}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+/* Tablet & below — stack sidebar under main */
+@media(max-width:900px){
+  body{overflow:auto;}
+  .page{flex-direction:column;height:auto;}
+  .col-resize{display:none;}
+  .left-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);padding:14px 16px 18px;overflow-y:visible;background:var(--bg);}
+  .left-panel .pt-card{flex-direction:row;align-items:center;}
+  .left-panel .pt-meta{flex-direction:row;gap:6px;}
+  .left-panel .pt-edit{width:auto;}
+  .left-panel .assess-grid{grid-template-columns:auto 1fr;}
+  .left-panel .size-grid{grid-template-columns:repeat(3,1fr);}
+  .main{overflow-y:visible;padding:14px 16px 24px;}
+  /* dvh adjusts automatically when iOS keyboard appears */
+  .sidebar{width:100%;height:min(520px,55dvh);border-left:none;border-top:1px solid var(--border);}
+  .assess-grid{grid-template-columns:1fr;}
+  .gauge-col{display:flex;flex-direction:column;align-items:center;}
+  .size-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* Mobile nav — scroll horizontally so all links fit at any width */
+@media(max-width:680px){
+  .topnav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:2px;padding:0 10px;}
+  .topnav::-webkit-scrollbar{display:none;}
+  .brand{flex-shrink:0;margin-right:4px;}
+  .sep{flex-shrink:0;}
+  .sp{flex:0;min-width:6px;}
+  a.nl{flex-shrink:0;font-size:12.5px;padding:5px 9px;}
+  .lang-btn{flex-shrink:0;font-size:11.5px;padding:3px 9px;}
+}
+
+/* Small phone */
+@media(max-width:480px){
+  .main{padding:10px 10px 20px;}
+  .card-pad{padding:12px 14px;}
+  .pt-card{padding:14px;}
+  .pt-name{font-size:16px;}
+  .pt-meta{gap:6px;}
+  .tab-btn{font-size:11px;padding:10px 4px;}
+  .size-grid{grid-template-columns:1fr 1fr;}
+  .gallery-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));}
+  .sidebar{height:min(480px,55dvh);}
+  .chat-msgs{padding:10px 10px;}
+  .chat-suggs{gap:4px;}
+  .sugg{font-size:11px;padding:3px 8px;}
+  .cam-big-btn{width:80px;height:80px;font-size:28px;}
+  .cam-video-wrap{max-width:100%;}
+  .mrow-pair{flex-direction:column;}
+  .mrow-pair>div{width:100%!important;}
+  .modal{padding:18px;}
+  .assess-grid{gap:12px;}
+}
+
+/* Very small phone */
+@media(max-width:360px){
+  .brand{font-size:14px;}
+  a.nl{font-size:11.5px;padding:4px 7px;}
+  .lang-btn{font-size:11px;padding:2px 7px;}
+  .pt-avatar{width:44px;height:44px;font-size:18px;}
+  .pt-name{font-size:14px;}
+  .tab-btn{font-size:10px;padding:9px 3px;}
+  .sidebar{height:min(440px,55dvh);}
+  .stat .num{font-size:20px;}
+}
+
+/* ── Left info panel (3-column layout) ──────────────────────────────────── */
+/* Narrow desktop sidebar only — below 900px the .left-panel becomes a
+   full-width mobile block instead (see the max-width:900px query above),
+   which must win over this fixed-width/stacked desktop styling. */
+@media(min-width:901px){
+.left-panel{width:252px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--border);padding:16px 14px 60px;scroll-behavior:smooth;background:var(--bg);will-change:width;}
+.left-panel::-webkit-scrollbar{width:5px;}
+.left-panel::-webkit-scrollbar-track{background:transparent;}
+.left-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+
+/* Compact patient card in left panel */
+.left-panel .pt-card{flex-direction:column;align-items:flex-start;gap:8px;padding:14px 14px;}
+.left-panel .pt-card::after{display:none;}
+.left-panel .pt-info{min-width:unset;width:100%;}
+.left-panel .pt-name{font-size:14px;}
+.left-panel .pt-meta{gap:4px;margin-top:4px!important;flex-direction:column;}
+.left-panel .pt-chip{font-size:11px;}
+.left-panel .pt-edit{width:100%;justify-content:center;margin-top:4px;font-size:12px;padding:5px 10px;}
+
+/* Assessment vertical layout in left panel */
+.left-panel .assess-grid{grid-template-columns:1fr;gap:10px;}
+.left-panel .gauge-col{text-align:center;}
+.left-panel .size-grid{grid-template-columns:1fr 1fr;gap:6px;}
+.left-panel .size-box{padding:8px 6px;}
+.left-panel .size-val{font-size:17px;}
+.left-panel .stats-col{gap:10px;}
+.left-panel .advice-card{padding:10px 12px;}
+.left-panel .advice-text{font-size:12px;line-height:1.55;}
+.left-panel .card-pad{padding:12px 14px;}
+.left-panel .section-label{margin-bottom:8px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="topnav">
+  <div class="brand">Open <span class="accent">Wound</span> Monitor</div>
+  <div class="sep"></div>
+  <a href="/" class="navlink active">Dashboard</a>
+  <div class="sp"></div>
+  <button class="lang-btn" id="langBtn" onclick="toggleLang()">中文</button>
+  <a href="/logout" class="navlink logout" data-i18n="nav_logout">Log out</a>
+</nav>
+
+<div class="page">
+
+  <!-- ══════════════════════ LEFT PANEL ════════════════════════ -->
+  <div class="left-panel">
+
+    <!-- Patient card -->
+    <div class="pt-card anim-fade-up">
+      <div class="pt-avatar" id="ptAvatar">T</div>
+      <div class="pt-info">
+        <div class="pt-name" id="ptName">—</div>
+        <div class="pt-meta" style="margin-top:5px;gap:8px;">
+          <span class="pt-chip"><span data-i18n="pt_id">ID</span>: <b id="ptId">—</b></span>
+          <span class="pt-chip"><span data-i18n="pt_age">Age</span>: <b id="ptAge">—</b></span>
+          <span class="pt-chip"><span data-i18n="pt_surgery">Onset</span>: <b id="ptSurgery">—</b></span>
+        </div>
+        <div id="ptWarning" style="display:none;margin-top:7px;font-size:11px;color:#fef3c7;background:rgba(0,0,0,.18);border-radius:6px;padding:4px 10px;align-items:center;gap:5px;">
+          ⚠ Patient info incomplete — click Edit to complete
+        </div>
+      </div>
+      <button class="pt-edit" onclick="openPtModal()" data-i18n="pt_edit">Edit</button>
+    </div>
+
+    <!-- Assessment -->
+    <div class="card anim-fade-up-1">
+      <div class="card-pad">
+        <div class="section-label" data-i18n="assess_title">Latest Assessment</div>
+        <div class="assess-grid" id="assessWrap">
+          <div class="gauge-col">
+            <div class="gauge-title" style="color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;" data-i18n="assess_grade">Wound Grade</div>
+            <div id="gaugeSvg"></div>
+            <div id="gradeBadge" style="margin-top:4px;"></div>
+            <div id="gradeDesc" class="gauge-desc"></div>
+          </div>
+          <div class="stats-col">
+            <div>
+              <div class="section-label" data-i18n="assess_measurements">Measurements</div>
+              <div class="size-grid" id="sizeRow"></div>
+            </div>
+            <div>
+              <div class="section-label" data-i18n="assess_recommendation">Clinical Recommendation</div>
+              <div class="advice-card" id="adviceBox">—</div>
+            </div>
+            <div style="font-size:11px;color:var(--muted)" id="assessedAt"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /left-panel -->
+  <div class="col-resize" id="resizeLeft" title="Drag to resize"></div>
+
+  <!-- ═══════════════════════ MAIN ═══════════════════════════════ -->
+  <div class="main">
+
+    <!-- Recovery Progress chart -->
+    <div class="card anim-fade-up-2" id="recoveryCard" style="display:none;">
+      <div class="card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-label" style="margin-bottom:0">Stage Progression</div>
+          <span id="recoveryTrend" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:12px;"></span>
+        </div>
+        <div id="recoveryChartWrap"></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:6px;font-style:italic">Y-axis: Stage (DTI → Unstageable → Stage 1–4) · X-axis: Assessment date</div>
+      </div>
+    </div>
+
+    <!-- Session tabs -->
+    <div class="card anim-fade-up-3">
+
+      <!-- Tab bar: only shown when sessions exist -->
+      <div class="tabs-bar" id="tabsBar" style="display:none">
+        <!-- dynamically built by renderTabs() -->
+      </div>
+
+      <!-- Session contents -->
+      <div id="sessTabContents"></div>
+
+      <!-- Empty state: shown when no sessions -->
+      <div id="emptyState" class="cam-body" style="text-align:center;padding:40px 24px 32px;">
+        <div style="margin-bottom:18px;opacity:.35">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;" data-i18n="empty_title">No assessments yet</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:28px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.6" data-i18n="empty_sub">Upload a wound image to run AI analysis, or record a video for later processing.</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
+          <label class="btn btn-teal" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:13.5px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span data-i18n="empty_upload_image">Upload Image</span>
+            <input type="file" accept="image/*,.heic,.heif" style="display:none" onchange="handleFileUpload(this)">
+          </label>
+          <label class="btn btn-outline" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:13.5px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <span data-i18n="empty_upload_video">Upload Video</span>
+            <input type="file" accept="video/*" style="display:none" onchange="handleFileUpload(this)">
+          </label>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="openAddPanel();toggleAddCamera()" style="color:var(--muted);font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span data-i18n="empty_open_camera">Use live camera</span>
+        </button>
+        <div id="emptyAnalysisResult" style="margin-top:18px;text-align:left;"></div>
+      </div>
+
+      <!-- Add Assessment tab view: shown when + is clicked (replaces session content in-place) -->
+      <div id="addTabContent" style="display:none;">
+        <div class="cam-body" style="text-align:center;padding:40px 24px 32px;">
+          <div style="margin-bottom:18px;opacity:.35">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><line x1="12" y1="8" x2="12" y2="8"/></svg>
+          </div>
+          <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;" data-i18n="panel_add_title">New Assessment</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:28px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.6" data-i18n="empty_sub">Upload a wound image to run AI analysis, or record a video for later processing.</div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
+            <label class="btn btn-teal" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:13.5px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span data-i18n="empty_upload_image">Upload Image</span>
+              <input type="file" accept="image/*,.heic,.heif" style="display:none" onchange="handleFileUpload(this)">
+            </label>
+            <label class="btn btn-outline" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:13.5px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              <span data-i18n="empty_upload_video">Upload Video</span>
+              <input type="file" accept="video/*" style="display:none" onchange="handleFileUpload(this)">
+            </label>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="toggleAddCamera()" style="color:var(--muted);font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <span data-i18n="empty_open_camera">Use live camera</span>
+          </button>
+          <div id="addAnalysisResult" style="margin-top:18px;text-align:left;"></div>
+        </div>
+
+        <!-- Camera section (shared camera elements live here) -->
+        <div id="addCamSection" style="display:none;" class="cam-body">
+          <div class="cam-start-wrap" id="camStartArea" style="padding:24px 0 16px;">
+            <div class="cam-hint" data-i18n="cam_hint">Tap to open camera</div>
+            <button class="cam-big-btn" id="camBigBtn" onclick="startCamera()">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            </button>
+          </div>
+          <div class="cam-video-wrap" id="camWrap" style="display:none">
+            <video id="camVid" autoplay muted playsinline></video>
+          </div>
+          <div class="cam-controls" id="camControls" style="display:none">
+            <button class="btn btn-teal" onclick="captureAndAnalyze()" data-i18n="cam_analyze">Capture &amp; Analyze</button>
+            <button class="btn btn-orange" id="btnRec" onclick="toggleRecord()" data-i18n="cam_record">Record</button>
+            <button class="btn btn-outline" onclick="stopCamera()" data-i18n="cam_stop">Stop</button>
+          </div>
+          <div id="recIndicator" style="display:none" class="rec-pill">
+            <span class="rec-dot"></span><span data-i18n="cam_recording"> Recording…</span>
+          </div>
+          <div id="recPreview" style="display:none;width:100%;max-width:500px;margin-top:12px;">
+            <div class="section-label" style="margin-bottom:6px;" data-i18n="cam_last_recording">Last Recording</div>
+            <div class="video-player-wrap"><video id="recVid" controls></video></div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-teal btn-sm" onclick="saveRecording()" data-i18n="cam_save_recording">Save as Session</button>
+              <a id="dlVid" class="btn btn-outline btn-sm" download="wound_recording.webm" data-i18n="cam_download">Download</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- /main -->
+  <div class="col-resize" id="resizeRight" title="Drag to resize"></div>
+
+  <!-- ═══════════════════════ SIDEBAR ════════════════════════════ -->
+  <div class="sidebar anim-fade-up-3" id="chatSidebar">
+    <div class="chat-resize-handle" id="chatResizeHandle" title="Drag to resize">
+      <div class="chat-resize-pill"></div>
+      <div class="chat-resize-hint">drag to resize</div>
+    </div>
+    <div class="chat-hdr">
+      <div class="chat-hdr-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="8" y1="3.5" x2="6" y2="5"/><line x1="16" y1="3.5" x2="18" y2="5"/></svg>
+      </div>
+      <div>
+        <div class="chat-hdr-title" data-i18n="chat_title">AI Wound Assistant</div>
+        <div class="chat-online" id="chatStatus"><span class="online-dot"></span> Ready</div>
+      </div>
+      <select class="model-sel" id="modelSel" onchange="onModelChange()">
+        <option value="">— Select a model —</option>
+      </select>
+    </div>
+    <!-- Model status banner -->
+    <div id="modelBanner" style="display:none;padding:8px 14px;border-bottom:1px solid var(--border);font-size:11.5px;flex-direction:column;gap:6px;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <div id="bannerSpinner" style="width:12px;height:12px;border:2px solid #e2e8f0;border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;display:none;flex-shrink:0;"></div>
+        <span id="modelErrText" style="flex:1">Loading model…</span>
+        <button id="bannerLogBtn" onclick="toggleModelLog()" style="display:none;font-size:10.5px;color:var(--teal);background:var(--teal-light);border:1px solid var(--teal-mid);border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit;">View Log</button>
+        <button id="bannerStopBtn" onclick="stopModel()" style="display:none;font-size:10.5px;color:var(--red);background:var(--red-light);border:1px solid #fca5a5;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit;">Stop</button>
+      </div>
+      <div id="launchProgress" style="display:none;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+        <div id="launchBar" style="height:100%;background:linear-gradient(90deg,var(--teal),#7c3aed);width:0%;transition:width .4s;border-radius:2px;"></div>
+      </div>
+      <pre id="modelLog" style="display:none;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--red);white-space:pre-wrap;word-break:break-all;max-height:180px;overflow-y:auto;line-height:1.5;"></pre>
+    </div>
+
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="msg bot" data-i18n="chat_welcome">Hello! I'm your open wound care assistant. Ask me about wound grade, healing progress, dressing advice, or patient information.</div>
+    </div>
+
+    <div class="chat-suggs">
+      <span class="sugg" data-msg="Current stage?"  data-i18n="sugg_grade"   onclick="quickAsk(this)">Current grade?</span>
+      <span class="sugg" data-msg="Wound size?"    data-i18n="sugg_size"    onclick="quickAsk(this)">Wound size?</span>
+      <span class="sugg" data-msg="Dressing advice" data-i18n="sugg_treat" onclick="quickAsk(this)">Dressing advice</span>
+      <span class="sugg" data-msg="Patient info"   data-i18n="sugg_patient" onclick="quickAsk(this)">Patient info</span>
+    </div>
+
+    <div class="chat-bottom">
+      <textarea class="chat-in" id="chatIn" rows="1" placeholder="Ask about wound status, treatment…" data-i18n="chat_placeholder"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+      <button class="btn btn-teal" onclick="sendChat()" style="align-self:flex-end;padding:9px 14px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- New Session Modal -->
+<div class="modal-ov hidden" id="newSessModal">
+  <div class="modal">
+    <h2 data-i18n="new_sess_title">Add Assessment Session</h2>
+    <div class="msub" data-i18n="new_sess_sub">Record a new wound assessment with images and grade.</div>
+    <div class="mrow">
+      <label data-i18n="new_sess_date">Assessment Date</label>
+      <input id="nsDate" type="date">
+    </div>
+    <div class="mrow">
+      <label data-i18n="new_sess_grade">Wound Stage</label>
+      <select id="nsGrade" style="width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:13.5px;padding:8px 11px;font-family:inherit;">
+        <option value="0">DTI — Deep Tissue Injury</option>
+        <option value="1">Unstageable</option>
+        <option value="2">Stage 1</option>
+        <option value="3">Stage 2</option>
+        <option value="4">Stage 3</option>
+        <option value="5">Stage 4</option>
+      </select>
+    </div>
+    <div class="mrow mrow-pair">
+      <div style="flex:1"><label data-i18n="new_sess_width">Width (cm)</label><input id="nsWidth" type="number" step="0.1" min="0" placeholder="0.0"></div>
+      <div style="flex:1"><label data-i18n="new_sess_height">Height (cm)</label><input id="nsHeight" type="number" step="0.1" min="0" placeholder="0.0"></div>
+    </div>
+    <div class="mrow">
+      <label data-i18n="new_sess_notes">Notes</label>
+      <input id="nsNotes" type="text" placeholder="Brief assessment note…">
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-outline" onclick="closeNewSessModal()" data-i18n="modal_cancel">Cancel</button>
+      <button class="btn btn-teal"    onclick="saveNewSession()"    data-i18n="new_sess_save">Add Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient modal -->
+<div class="modal-ov hidden" id="ptModal">
+  <div class="modal">
+    <h2 data-i18n="modal_title">Patient Information</h2>
+    <div class="msub" data-i18n="modal_sub">Used to provide AI assistant context for this patient's open wound assessment.</div>
+    <div class="mrow">
+      <label data-i18n="modal_name">Full Name *</label>
+      <input id="mName" type="text" placeholder="e.g. Nguyen Van A">
+    </div>
+    <div class="mrow mrow-pair">
+      <div style="flex:1"><label data-i18n="modal_pid">Patient ID *</label><input id="mId" type="text" placeholder="e.g. 1234567"></div>
+      <div style="width:90px"><label data-i18n="modal_age">Age</label><input id="mAge" type="number" placeholder="27"></div>
+    </div>
+    <div class="mrow">
+      <label data-i18n="modal_surgery">Wound Onset Date</label>
+      <input id="mSurgery" type="date">
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-outline" onclick="closePtModal()" data-i18n="modal_cancel">Cancel</button>
+      <button class="btn btn-teal"    onclick="savePt()" data-i18n="modal_save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lb hidden" id="lb" onclick="closeLb()">
+  <img id="lbImg" src="" alt="">
+</div>
+
+<!-- Upload status -->
+<div class="upload-status hidden" id="uploadStatus">
+  <div class="ustatus-title">
+    <div id="ustatusSpinner" style="width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
+    <span id="ustatusTitle">Processing…</span>
+  </div>
+  <div class="ustatus-steps">
+    <div class="ustatus-step" id="uStep1">
+      <div class="ustatus-step-dot">1</div><span>Uploading</span>
+    </div>
+    <div class="ustatus-connector" id="uConn1"></div>
+    <div class="ustatus-step" id="uStep2">
+      <div class="ustatus-step-dot">2</div><span>AI Analysis</span>
+    </div>
+    <div class="ustatus-connector" id="uConn2"></div>
+    <div class="ustatus-step" id="uStep3">
+      <div class="ustatus-step-dot">3</div><span>Done</span>
+    </div>
+  </div>
+  <div class="ustatus-bar"><div class="ustatus-bar-fill" id="ustatusBar" style="width:0%"></div></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── i18n ─────────────────────────────────────────────────────────────────────
+const LANG = {
+  en: {
+    nav_overview:"Overview", nav_tasks:"Tasks", nav_label:"Label", nav_demo:"Demo", nav_logout:"Log out",
+    pt_id:"ID", pt_age:"Age", pt_surgery:"Onset", pt_edit:"Edit", age_unit:"yrs",
+    assess_title:"Latest Wound Classification", assess_grade:"Wound Stage",
+    assess_measurements:"Measurements", assess_recommendation:"Clinical Recommendation",
+    assess_no_data:"No data", assess_no_session:"No session recorded yet.", assess_assessed:"Assessed",
+    advice_head:"Recommendation",
+    size_width:"Width (cm)", size_height:"Height (cm)", size_area:"Area (cm²)",
+    sess_tab:"Session",
+    cam_hint:"Tap to open camera", cam_record:"Record", cam_stop_rec:"Stop Recording",
+    cam_capture:"Capture", cam_stop:"Stop", cam_recording:" Recording…",
+    cam_last_recording:"Last Recording", cam_download:"Download",
+    chat_title:"AI Wound Assistant", chat_ready:"Ready",
+    sugg_grade:"Current stage?", sugg_size:"Wound size?", sugg_treat:"Dressing advice", sugg_patient:"Patient info",
+    chat_placeholder:"Ask about wound status, dressing, treatment…",
+    chat_welcome:"Hello! I'm your open wound care assistant. Ask me about wound grade, healing progress, dressing advice, or patient information.",
+    modal_title:"Patient Information", modal_sub:"Used to provide AI assistant context for this patient's open wound assessment.",
+    modal_name:"Full Name *", modal_pid:"Patient ID *", modal_age:"Age",
+    modal_surgery:"Wound Onset Date", modal_cancel:"Cancel", modal_save:"Save Changes",
+    empty_no_images:"No images yet — drop your files into:",
+    model_rule_based:"— Select a model —",
+    g0_name:"Epithelialized",    g0_app:"Wound fully epithelialized. Monitor for recurrence.",
+    g1_name:"Granulating",     g1_app:"Healthy granulation tissue. Maintain moist wound environment.",
+    g2_name:"Mixed Tissue",      g2_app:"Mixed granulation and slough. Gentle debridement recommended.",
+    g3_name:"Sloughing",         g3_app:"Significant slough. Enzymatic debridement indicated.",
+    g4_name:"Infected",         g4_app:"Active infection. Culture swab + antibiotics if indicated.",
+    g5_name:"Necrotic",  g5_app:"Extensive necrosis. Urgent surgical debridement required.",
+    adv0:"Off-load pressure immediately. Monitor daily for deterioration or conversion to higher stage.",
+    adv1:"Debridement required before staging. Enzymatic or surgical — wound team involvement.",
+    adv2:"Relieve pressure. Transparent film or hydrocolloid dressing. Inspect daily.",
+    adv3:"Moist wound healing — foam/hydrocolloid. Reposition every 2h. Review in 48–72h.",
+    adv4:"Debridement + advanced dressings (foam/alginate). Off-loading essential. Review in 24–48h.",
+    adv5:"Urgent surgical consult. IV antibiotics if osteomyelitis suspected. Multidisciplinary team.",
+    cam_tab:"New Assessment",
+    cam_upload_title:"Upload Image or Video",
+    cam_upload_sub:"Drag & drop or click — image runs AI immediately · video saved for later",
+    cam_or:"— or use live camera —",
+    cam_analyze:"Capture & Analyze",
+    cam_save_recording:"Save as Session",
+    empty_title:"No assessments yet",
+    empty_sub:"Upload a wound image to run AI analysis, or record a video for later processing.",
+    empty_upload_image:"Upload Image",
+    empty_upload_video:"Upload Video",
+    empty_open_camera:"Live Camera",
+    panel_add_title:"New Assessment",
+    sess_new:"New Session", sess_upload:"Upload Images", delete_session:"Delete",
+    new_sess_title:"Add Assessment Session",
+    new_sess_sub:"Record a new wound assessment and select the pressure injury stage.",
+    new_sess_date:"Assessment Date", new_sess_grade:"Wound Stage",
+    new_sess_width:"Width (cm)", new_sess_height:"Height (cm)",
+    new_sess_notes:"Notes", new_sess_save:"Add Session",
+    video_block1_pending:"Video uploaded — AI wound analysis pending.",
+    ai_result_grade:"AI Stage",
+  },
+  zh: {
+    nav_overview:"總覽", nav_tasks:"任務", nav_label:"標記", nav_demo:"示範", nav_logout:"登出",
+    pt_id:"編號", pt_age:"年齡", pt_surgery:"傷口起始", pt_edit:"編輯", age_unit:"歲",
+    assess_title:"最新傷口分期", assess_grade:"傷口分期",
+    assess_measurements:"測量數據", assess_recommendation:"臨床建議",
+    assess_no_data:"無資料", assess_no_session:"尚未記錄會話。", assess_assessed:"評估",
+    advice_head:"建議",
+    size_width:"寬度 (cm)", size_height:"高度 (cm)", size_area:"面積 (cm²)",
+    sess_tab:"會話",
+    cam_hint:"點擊開啟攝影機", cam_record:"錄影", cam_stop_rec:"停止錄影",
+    cam_capture:"截圖", cam_stop:"停止", cam_recording:" 錄影中…",
+    cam_last_recording:"最後錄影", cam_download:"下載",
+    chat_title:"AI 傷口助理", chat_ready:"就緒",
+    sugg_grade:"目前分期？", sugg_size:"傷口大小？", sugg_treat:"敷料建議", sugg_patient:"病患資訊",
+    chat_placeholder:"詢問傷口狀況、敷料建議…",
+    chat_welcome:"您好！我是您的開放性傷口護理助理。請詢問傷口等級、癒合進展、敷料建議或病患資訊。",
+    modal_title:"病患資訊", modal_sub:"用於提供 AI 助理開放性傷口評估所需的病患背景資訊。",
+    modal_name:"姓名 *", modal_pid:"病患編號 *", modal_age:"年齡",
+    modal_surgery:"傷口起始日期", modal_cancel:"取消", modal_save:"儲存變更",
+    empty_no_images:"尚無影像 — 請將檔案放入：",
+    model_rule_based:"— 選擇模型 —",
+    s0_name:"深部組織損傷",  s0_app:"疑似深部組織損傷，立即解除壓力，密切觀察惡化情形。",
+    s1_name:"無法分期",      s1_app:"傷口床被腐肉或焦痂覆蓋，真實深度不明，需先清創。",
+    s2_name:"第一期",        s2_app:"不可消退性紅斑，皮膚完整，解除壓力並每日檢查。",
+    s3_name:"第二期",        s3_app:"部分皮膚缺損，濕性傷口癒合，選擇適當敷料。",
+    s4_name:"第三期",        s4_app:"全層皮膚缺損，脂肪可見，清創及進階敷料必要。",
+    s5_name:"第四期",        s5_app:"骨骼/肌腱/肌肉外露，緊急外科會診，骨髓炎風險高。",
+    adv0:"立即解除壓力，每日觀察是否進展為更高期別。",
+    adv1:"需清創後才能分期，建議傷口照護團隊介入。",
+    adv2:"解除壓力，透明薄膜或水膠體敷料，每日檢查。",
+    adv3:"濕性癒合敷料（泡棉/水膠體），每2小時翻身，48–72小時回診。",
+    adv4:"清創加進階敷料（泡棉/海藻酸鹽），解除壓力，24–48小時回診。",
+    adv5:"緊急外科會診，疑骨髓炎需靜脈抗生素，多專科團隊介入。",
+    cam_tab:"新增評估",
+    cam_upload_title:"上傳影像或影片",
+    cam_upload_sub:"拖放或點擊 — 影像立即執行 AI · 影片儲存待後續處理",
+    cam_or:"— 或使用即時攝影機 —",
+    cam_analyze:"截圖並分析",
+    cam_save_recording:"儲存為評估會話",
+    empty_title:"尚無評估紀錄",
+    empty_sub:"上傳傷口影像以執行 AI 分析，或錄製影片以供後續處理。",
+    empty_upload_image:"上傳影像",
+    empty_upload_video:"上傳影片",
+    empty_open_camera:"即時攝影機",
+    panel_add_title:"新增評估",
+    sess_new:"新增會話", sess_upload:"上傳影像", delete_session:"刪除",
+    new_sess_title:"新增評估會話",
+    new_sess_sub:"記錄新的傷口評估並選擇壓傷分期。",
+    new_sess_date:"評估日期", new_sess_grade:"傷口分期",
+    new_sess_width:"寬度（cm）", new_sess_height:"高度（cm）",
+    new_sess_notes:"備註", new_sess_save:"新增會話",
+    video_block1_pending:"影片已上傳 — 等待 AI 傷口分析處理。",
+    ai_result_grade:"AI 分期",
+  }
+};
+let _lang = localStorage.getItem("demoLang") || "en";
+function t(key){ return (LANG[_lang]||LANG.en)[key] || (LANG.en[key]||key); }
+function toggleLang(){
+  _lang = _lang==="en"?"zh":"en";
+  localStorage.setItem("demoLang",_lang);
+  applyLang();
+}
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key=el.dataset.i18n;
+    if(el.tagName==="INPUT"||el.tagName==="TEXTAREA") el.placeholder=t(key);
+    else el.textContent=t(key);
+  });
+  const btn=document.getElementById("langBtn");
+  if(btn) btn.textContent = _lang==="en"?"中文":"ENG";
+  // model selector: no blank placeholder needed (auto-selects first or shows "no model" on load)
+  renderAll();
+}
+
+// ── Stage classification (Pressure Injury — NPUAP/EPUAP) ──────────────────────
+const STAGES = [
+  {id:"DTI",         name:"DTI",         full:"Deep Tissue Injury",  col:"#6b21a8", bg:"#f3e8ff", app:"Suspected deep tissue injury. Non-blanchable maroon/purple discoloration or blood-filled blister. Off-load immediately. Monitor closely for deterioration."},
+  {id:"Unstageable", name:"Unstageable", full:"Unstageable",         col:"#475569", bg:"#f1f5f9", app:"Full-thickness skin or tissue loss — depth unknown. Wound bed covered with slough or eschar. Debridement required to determine true stage."},
+  {id:"Stage1",      name:"Stage 1",     full:"Stage 1",             col:"#ca8a04", bg:"#fef9c3", app:"Non-blanchable erythema of intact skin. Skin intact, may feel warmer/firmer. Off-load pressure area. Inspect daily."},
+  {id:"Stage2",      name:"Stage 2",     full:"Stage 2",             col:"#ea580c", bg:"#ffedd5", app:"Partial-thickness skin loss with exposed dermis. Shallow open wound, pink-red wound bed. Moist wound healing — appropriate dressing selection."},
+  {id:"Stage3",      name:"Stage 3",     full:"Stage 3",             col:"#dc2626", bg:"#fee2e2", app:"Full-thickness skin loss. Subcutaneous fat may be visible. No bone, tendon, or muscle exposed. Debridement and advanced dressings required."},
+  {id:"Stage4",      name:"Stage 4",     full:"Stage 4",             col:"#9f1239", bg:"#ffe4e6", app:"Full-thickness tissue loss. Bone, tendon, or muscle exposed. Osteomyelitis risk — urgent surgical consultation. Comprehensive wound care team involvement."},
+];
+// Keep G as alias for backward compat with AI panel
+const G = STAGES.map(s=>({name:s.name,col:s.col,bg:s.bg,app:s.app}));
+const ADVICE = STAGES.map(s=>s.app);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let demo     = {patient:{}, sessions:[]};
+let activeSessionId = null;
+let camStream = null;
+let mediaRec  = null;
+let recChunks = [];
+let recOn     = false;
+let toastT;
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s){return(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmtDate(iso){
+  if(!iso)return"—";
+  const d=new Date(iso);
+  if(isNaN(d))return iso;
+  return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+}
+function toast(msg,type="info"){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.className="toast show "+type;
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2800);
+}
+function closeLb(){document.getElementById("lb").classList.add("hidden");}
+function openLb(src){document.getElementById("lbImg").src=src;document.getElementById("lb").classList.remove("hidden");}
+
+// ── Stage badge ──────────────────────────────────────────────────────────────
+function buildStageBadge(idx){
+  const s = STAGES[Math.max(0,Math.min(5,idx))] || STAGES[0];
+  const segs = STAGES.map((st,i)=>
+    `<div style="flex:1;height:8px;border-radius:4px;background:${i===idx?st.col:'#e2e8f0'};transition:background .3s;cursor:default;" title="${st.full}"></div>`
+  ).join("");
+  return `<div style="text-align:center;padding:10px 0 4px;">
+    <div style="font-size:22px;font-weight:800;color:${s.col};letter-spacing:-.01em;line-height:1.1">${s.full}</div>
+    <div style="font-size:11.5px;color:${s.col};font-weight:500;margin-top:2px;opacity:.75">${s.id==="DTI"?"Deep Tissue Injury":s.id==="Unstageable"?"Suspected full-thickness, depth unknown":""}</div>
+    <div style="display:flex;gap:4px;margin-top:10px;padding:0 4px;">${segs}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:3px;padding:0 4px;">
+      <span style="font-size:9px;color:var(--muted)">DTI</span>
+      <span style="font-size:9px;color:var(--muted)">Stage 4</span>
+    </div>
+  </div>`;
+}
+
+// ── Load & render ─────────────────────────────────────────────────────────────
+async function load(){
+  try{
+    const r=await fetch("/api/demo/data");
+    if(r.status===401){location.href="/login";return;}
+    demo=await r.json();
+    if(activeSessionId===null){
+      activeSessionId=(demo.sessions&&demo.sessions.length)?demo.sessions[demo.sessions.length-1].id:null;
+    }
+    renderAll();
+    loadModels();
+  }catch{toast("Failed to load data","err");}
+}
+
+function renderAll(){renderPt();renderAssess();renderRecovery();renderTabs();}
+
+// ── Patient ───────────────────────────────────────────────────────────────────
+function renderPt(){
+  const p=demo.patient||{};
+  const incomplete = !p.name || !p.patient_id || !p.age || !p.wound_onset_date;
+  document.getElementById("ptName").textContent    = p.name || "— No patient set —";
+  document.getElementById("ptId").textContent      = p.patient_id||"—";
+  document.getElementById("ptAge").textContent     = p.age?`${p.age} ${t('age_unit')}`:"—";
+  document.getElementById("ptSurgery").textContent = p.wound_onset_date?fmtDate(p.wound_onset_date):"—";
+  const av=document.getElementById("ptAvatar");
+  if(av) av.textContent = p.name
+    ? p.name.trim().split(/\s+/).map(w=>w[0]).join("").toUpperCase().slice(0,2)
+    : "?";
+  // Warning banner
+  const warn=document.getElementById("ptWarning");
+  if(warn){ warn.style.display=incomplete?"inline-flex":"none"; }
+}
+
+function openPtModal(){
+  const p=demo.patient||{};
+  document.getElementById("mName").value    = p.name||"";
+  document.getElementById("mId").value      = p.patient_id||"";
+  document.getElementById("mAge").value     = p.age||"";
+  document.getElementById("mSurgery").value = p.wound_onset_date||"";
+  document.getElementById("ptModal").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("mName").focus(),60);
+}
+function closePtModal(){document.getElementById("ptModal").classList.add("hidden");}
+document.getElementById("ptModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closePtModal();});
+
+async function savePt(){
+  const name =document.getElementById("mName").value.trim();
+  const pid  =document.getElementById("mId").value.trim();
+  const age  =parseInt(document.getElementById("mAge").value)||0;
+  const sdate=document.getElementById("mSurgery").value;
+  if(!name)  {toast("Full name is required","err");document.getElementById("mName").focus();return;}
+  if(!pid)   {toast("Patient ID is required","err");document.getElementById("mId").focus();return;}
+  if(!age||age<=0){toast("Age must be a positive number","err");document.getElementById("mAge").focus();return;}
+  if(!sdate) {toast("Wound onset date is required","err");document.getElementById("mSurgery").focus();return;}
+  const r=await fetch("/api/demo/patient",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name,patient_id:pid,age,wound_onset_date:sdate})});
+  const d=await r.json();
+  if(d.ok){demo=d.data;renderPt();closePtModal();toast("Patient info saved","ok");}
+  else toast("Save failed","err");
+}
+
+// ── Assessment ────────────────────────────────────────────────────────────────
+let _lastRecommKey = "";
+function renderAssess(){
+  const sessions=demo.sessions||[];
+  const latest=sessions.length?sessions[sessions.length-1]:null;
+  if(!latest){
+    document.getElementById("gaugeSvg").innerHTML="";
+    document.getElementById("gradeBadge").innerHTML=`<span style='color:var(--muted);font-size:13px'>${t('assess_no_data')}</span>`;
+    document.getElementById("gradeDesc").textContent="";
+    document.getElementById("sizeRow").innerHTML="";
+    document.getElementById("adviceBox").innerHTML=`<div class="advice-head">${t('advice_head')}</div><div class="advice-text" style="color:var(--muted)">${t('assess_no_session')}</div>`;
+    document.getElementById("assessedAt").textContent="";
+    return;
+  }
+  const g=latest.grade>=0?latest.grade:0, si=STAGES[Math.max(0,Math.min(5,g))];
+  document.getElementById("gaugeSvg").innerHTML=buildStageBadge(g);
+  document.getElementById("gradeBadge").innerHTML="";
+  document.getElementById("gradeDesc").textContent=si.app;
+
+  // Measurements from Block 1 detect result
+  const det = (latest.ai_result||{}).detect || {};
+  const lengthMm = det.length_mm || latest.wound_length_mm || 0;
+  const areaMm2  = det.area_mm2  || latest.wound_area_mm2  || 0;
+  document.getElementById("sizeRow").innerHTML=`
+    <div class="size-box">
+      <div class="size-val" style="${lengthMm?'':'color:var(--muted)'}">${lengthMm?lengthMm+" mm":"—"}</div>
+      <div class="size-lbl">Length (est.)</div>
+    </div>
+    <div class="size-box">
+      <div class="size-val" style="${areaMm2?'':'color:var(--muted)'}">${areaMm2?areaMm2+" mm²":"—"}</div>
+      <div class="size-lbl">Area (est.)</div>
+    </div>
+  `;
+
+  document.getElementById("assessedAt").textContent=
+    `${t('assess_assessed')}: ${fmtDate(latest.date)}`+
+    (latest.created_at?` · ${new Date(latest.created_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}`:"");
+
+  // Auto-fetch LLM recommendation (cached by session+grade key)
+  const recommKey = latest.id+":"+g;
+  if(recommKey !== _lastRecommKey){
+    _lastRecommKey = recommKey;
+    fetchRecommendation(latest, g);
+  }
+}
+
+async function fetchRecommendation(latest, grade){
+  const advBox = document.getElementById("adviceBox");
+  advBox.innerHTML=`<div class="advice-head">${t('advice_head')}</div><div class="advice-text" style="color:var(--muted);font-size:12px">Loading recommendation…</div>`;
+  try{
+    const modelId = document.getElementById("modelSel")?.value || _currentModelId || "";
+    const r = await fetch("/api/demo/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message:"In 2–3 short bullet points, give the key clinical actions based on the full wound history. Be concise.",
+        mode: "recommendation",
+        model_id: modelId,
+        patient: demo.patient||{},
+        latest_session: latest,
+        all_sessions: demo.sessions||[]
+      })});
+    const d = await r.json();
+    const src = d.model && d.model!=="rule-based" ? ` <span style="font-size:9.5px;opacity:.6">(${esc(d.model)})</span>` : "";
+    advBox.innerHTML=`<div class="advice-head">${t('advice_head')}${src}</div><div class="advice-text">${esc(d.reply||"—")}</div>`;
+  }catch{
+    advBox.innerHTML=`<div class="advice-head">${t('advice_head')}</div><div class="advice-text">${t("adv"+grade)||"—"}</div>`;
+  }
+}
+
+// ── Recovery Progress chart ───────────────────────────────────────────────────
+function renderRecovery(){
+  const card = document.getElementById("recoveryCard");
+  if(!card) return;
+  const sessions=(demo.sessions||[]).filter(s=>s.grade>=0);
+  if(sessions.length < 2){card.style.display="none";return;}
+  card.style.display="block";
+
+  const sorted=[...sessions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const n=sorted.length;
+  const W=560, H=190;
+  const pad={top:28,right:28,bottom:44,left:38};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+
+  const xOf=i=>pad.left+(n>1?i*cW/(n-1):cW/2);
+  const yOf=g=>pad.top+((5-Math.max(0,Math.min(5,g)))/5)*cH;
+
+  // Grid + Y labels (stage names)
+  const STAGE_ABBR=["DTI","Unst","S1","S2","S3","S4"];
+  let grid="";
+  [0,1,2,3,4,5].forEach(g=>{
+    const y=yOf(g), si=STAGES[g];
+    const isEdge=g===0||g===5;
+    grid+=`<line x1="${pad.left}" y1="${y}" x2="${pad.left+cW}" y2="${y}" stroke="${isEdge?'#cbd5e1':'#f1f5f9'}" stroke-width="${isEdge?1.5:1}"/>
+    <text x="${pad.left-6}" y="${y+3.5}" text-anchor="end" font-size="8.5" fill="${si.col}" font-family="Inter,sans-serif" font-weight="600">${STAGE_ABBR[g]}</text>`;
+  });
+
+  // Polyline
+  const pts=sorted.map((s,i)=>`${xOf(i)},${yOf(s.grade)}`);
+  const fillPts=[`${xOf(0)},${yOf(0)}`,...pts,`${xOf(n-1)},${yOf(0)}`].join(" ");
+
+  // Dots
+  let dots="";
+  sorted.forEach((s,i)=>{
+    const si2=STAGES[Math.max(0,Math.min(5,s.grade))];
+    const x=xOf(i), y=yOf(s.grade);
+    dots+=`<circle cx="${x}" cy="${y}" r="5.5" fill="${si2.col}" stroke="white" stroke-width="2.5" filter="url(#dsh)"/>
+    <text x="${x}" y="${y-11}" text-anchor="middle" font-size="8" fill="${si2.col}" font-weight="700" font-family="Inter,sans-serif">${STAGE_ABBR[s.grade]||s.grade}</text>`;
+  });
+
+  // X labels — skip overlapping ones if many sessions
+  let xLbls="";
+  sorted.forEach((s,i)=>{
+    if(n<=7||i%Math.ceil(n/6)===0||i===n-1){
+      xLbls+=`<text x="${xOf(i)}" y="${H-8}" text-anchor="middle" font-size="8.5" fill="#94a3b8">${fmtDate(s.date)}</text>`;
+    }
+  });
+
+  // Trend indicator
+  const first=sorted[0].grade, last=sorted[n-1].grade;
+  const improving=last<first, worsening=last>first;
+  const trendCol=improving?"#22c55e":worsening?"#ef4444":"#94a3b8";
+  const trendTxt=improving?"Improving ↓":worsening?"Worsening ↑":"Stable →";
+  document.getElementById("recoveryTrend").textContent=trendTxt;
+  document.getElementById("recoveryTrend").style.cssText=`background:${trendCol}22;color:${trendCol};font-size:11px;font-weight:700;padding:2px 10px;border-radius:12px;border:1px solid ${trendCol}55`;
+
+  document.getElementById("recoveryChartWrap").innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible">
+      <defs>
+        <linearGradient id="cGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="dsh" x="-60%" y="-60%" width="220%" height="220%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.22"/>
+        </filter>
+      </defs>
+      <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+cH+4}" stroke="#cbd5e1" stroke-width="1.5"/>
+      ${grid}
+      <polygon points="${fillPts}" fill="url(#cGrad)"/>
+      <polyline points="${pts.join(" ")}" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${xLbls}
+      <text transform="rotate(-90)" x="${-(pad.top+cH/2)}" y="11" text-anchor="middle" font-size="8.5" fill="#94a3b8" letter-spacing=".08em">GRADE</text>
+    </svg>`;
+}
+
+// ── Session tabs ──────────────────────────────────────────────────────────────
+function renderTabs(){
+  const sessions=demo.sessions||[];
+  const bar=document.getElementById("tabsBar");
+  const emptyState=document.getElementById("emptyState");
+  const addTabContent=document.getElementById("addTabContent");
+  if(!bar)return;
+
+  if(!sessions.length){
+    bar.style.display="none";
+    if(emptyState) emptyState.style.display="block";
+    if(addTabContent) addTabContent.style.display="none";
+    document.getElementById("sessTabContents").innerHTML="";
+    return;
+  }
+
+  // Sessions exist — close add view, show session tabs
+  bar.style.display="flex";
+  if(emptyState) emptyState.style.display="none";
+  if(addTabContent) addTabContent.style.display="none";
+  const addBtn=document.getElementById("addTabBtn");
+  if(addBtn) addBtn.classList.remove("active");
+
+  // Ensure activeSessionId is valid
+  if(!activeSessionId || !sessions.find(s=>s.id===activeSessionId)){
+    activeSessionId=sessions[sessions.length-1].id;
+  }
+
+  bar.innerHTML=sessions.map((s,i)=>{
+    const gi=STAGES[Math.max(0,Math.min(5,s.grade>=0?s.grade:0))]||STAGES[0];
+    const active=s.id===activeSessionId;
+    return `<button class="tab-btn${active?" active":""}" data-sid="${s.id}" onclick="selectTab('${s.id}')" title="${fmtDate(s.date)}">
+      ${t('sess_tab')} ${i+1}<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${gi.col};margin-left:5px;vertical-align:middle;flex-shrink:0"></span>
+    </button>`;
+  }).join("")+
+  `<button class="tab-btn" id="addTabBtn" onclick="toggleAddPanel()" title="${t('panel_add_title')}" style="font-size:18px;padding:8px 16px;font-weight:700;color:var(--teal)">+</button>`;
+
+  const contents=document.getElementById("sessTabContents");
+  if(contents){
+    contents.innerHTML=sessions.map((s,i)=>
+      `<div class="tab-content${s.id===activeSessionId?" active":""}" id="sess-${s.id}">${buildSessionContent(s,i)}</div>`
+    ).join("");
+  }
+}
+
+function openAddPanel(){
+  const sessions=demo.sessions||[];
+  // Hide emptyState when no sessions (add view takes its place)
+  const emptyState=document.getElementById("emptyState");
+  if(emptyState) emptyState.style.display="none";
+  // Deactivate all session tabs
+  document.querySelectorAll(".tab-btn[data-sid]").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll("#sessTabContents .tab-content").forEach(c=>c.classList.remove("active"));
+  // Show add tab content in-place (no scroll)
+  const atc=document.getElementById("addTabContent");
+  atc.style.display="block";
+  document.getElementById("addCamSection").style.display="none";
+  document.getElementById("addAnalysisResult").innerHTML="";
+  // Mark + button active
+  const addBtn=document.getElementById("addTabBtn");
+  if(addBtn) addBtn.classList.add("active");
+}
+function closeAddPanel(){
+  stopCamera();
+  document.getElementById("addTabContent").style.display="none";
+  document.getElementById("addCamSection").style.display="none";
+  const addBtn=document.getElementById("addTabBtn");
+  if(addBtn) addBtn.classList.remove("active");
+  // Restore emptyState if no sessions
+  const sessions=demo.sessions||[];
+  if(!sessions.length){
+    const emptyState=document.getElementById("emptyState");
+    if(emptyState) emptyState.style.display="block";
+  }
+}
+function toggleAddPanel(){
+  const atc=document.getElementById("addTabContent");
+  if(atc.style.display==="none"||!atc.style.display) openAddPanel();
+  else closeAddPanel();
+}
+function toggleAddCamera(){
+  const s=document.getElementById("addCamSection");
+  s.style.display=s.style.display==="none"||!s.style.display?"block":"none";
+  if(s.style.display==="none") stopCamera();
+}
+
+function buildSessionContent(s,i){
+  const clampedGrade = Math.max(0, Math.min(5, s.grade >= 0 ? s.grade : 0));
+  const gi = STAGES[clampedGrade] || STAGES[0];
+  const imgs = s.images || [];
+  const vids = s.videos || [];
+
+  // Image gallery
+  let galleryHtml = "";
+  if(imgs.length){
+    galleryHtml = `<div class="gallery-grid">${imgs.map(name => {
+      const hasAI = s.ai_result && s.ai_result.source_image === name && !s.ai_result.error;
+      return `<div class="thumb-wrap">
+        <img class="thumb-img" loading="lazy" alt="${esc(name)}"
+          src="/api/demo/session/${s.id}/images/${encodeURIComponent(name)}"
+          onclick="openLb(this.src)">
+        <div class="thumb-overlay">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        ${hasAI ? "" : `<button class="ai-analyze-btn" id="aibtn-${s.id}-${encodeURIComponent(name)}"
+          onclick="event.stopPropagation();analyzeImage('${s.id}','${name}')" title="Analyze with AI segmentation model">AI</button>`}
+      </div>`;
+    }).join("")}</div>`;
+  } else if(!vids.length) {
+    galleryHtml = `
+      <div class="empty-folder">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="opacity:.25;margin-bottom:8px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div class="empty-text">${t('empty_no_images')}</div>
+      </div>`;
+  }
+
+  // Video list
+  let videoHtml = "";
+  if(vids.length){
+    videoHtml = `<div style="margin-top:12px;">
+      ${vids.map(vname => `
+        <div style="margin-bottom:10px;">
+          <div class="video-player-wrap">
+            <video controls src="/api/demo/session/${s.id}/video/${encodeURIComponent(vname)}"></video>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            ${t('video_block1_pending')}
+          </div>
+        </div>`).join("")}
+    </div>`;
+  }
+
+  // Stored AI result
+  let aiHtml = "";
+  if(s.ai_result && !s.ai_result.error){
+    aiHtml = buildSegResultFromStored(s.ai_result, s.id);
+  } else if(s.ai_result && s.ai_result.error){
+    aiHtml = `<div style="padding:10px 0;color:var(--red);font-size:12.5px;">AI error: ${esc(s.ai_result.error)}</div>`;
+  }
+
+  const gradeLabel = s.grade >= 0
+    ? (STAGES[clampedGrade]||STAGES[0]).full
+    : "Not yet classified";
+
+  return `
+    <div class="sess-head" style="flex-wrap:wrap;">
+      <div class="sess-date">${fmtDate(s.date)}</div>
+      <span class="grade-pill" style="background:${gi.bg};color:${gi.col}">${gradeLabel}</span>
+      ${(s.wound_width||s.wound_height)?`<span class="sess-meta">${s.wound_width||"?"}×${s.wound_height||"?"} cm</span>`:""}
+      ${s.wound_area_mm2?`<span class="sess-meta" style="color:#16a34a">&#9632; ${s.wound_area_mm2.toLocaleString()} mm²</span>`:""}
+      <button class="btn btn-red btn-sm" onclick="deleteSession('${s.id}')" style="margin-left:auto">${t('delete_session')}</button>
+    </div>
+    ${galleryHtml}
+    ${videoHtml}
+    ${s.notes?`<div style="margin-top:10px;font-size:12.5px;color:var(--muted);font-style:italic;line-height:1.55">"${esc(s.notes)}"</div>`:""}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <label class="btn btn-outline btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        ${t('sess_upload')}
+        <input type="file" accept="image/*,.heic,.heif" multiple style="display:none" onchange="uploadSessionImages('${s.id}',this)">
+      </label>
+    </div>
+    <div id="seg-res-${s.id}">${aiHtml}</div>`;
+}
+
+function selectTab(sid){
+  activeSessionId=sid;
+  stopCamera();
+  closeAddPanel();
+  document.querySelectorAll(".tab-btn[data-sid]").forEach(b=>{
+    b.classList.toggle("active",b.dataset.sid===sid);
+  });
+  document.querySelectorAll("#sessTabContents .tab-content").forEach(c=>c.classList.remove("active"));
+  const el=document.getElementById("sess-"+sid);
+  if(el) el.classList.add("active");
+}
+
+// ── Camera ────────────────────────────────────────────────────────────────────
+const camVid=document.getElementById("camVid");
+
+async function startCamera(){
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    camVid.srcObject=camStream;
+    document.getElementById("camStartArea").style.display="none";
+    document.getElementById("camWrap").style.display="block";
+    document.getElementById("camControls").style.display="flex";
+    document.getElementById("camLabel") && (document.getElementById("camLabel").textContent="Camera active");
+  }catch{toast("Camera access denied or not available","err");}
+}
+
+function stopCamera(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  if(recOn)stopRec();
+  camVid.srcObject=null;
+  document.getElementById("camStartArea").style.display="flex";
+  document.getElementById("camWrap").style.display="none";
+  document.getElementById("camControls").style.display="none";
+  document.getElementById("recIndicator").style.display="none";
+}
+
+function toggleRecord(){recOn?stopRec():startRec();}
+
+function startRec(){
+  if(!camStream)return;
+  recChunks=[];
+  const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+  mediaRec=new MediaRecorder(camStream,{mimeType:mime});
+  mediaRec.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
+  mediaRec.onstop=onRecStop;
+  mediaRec.start(200);recOn=true;
+  document.getElementById("btnRec").textContent=t("cam_stop_rec");
+  document.getElementById("btnRec").className="btn btn-red";
+  document.getElementById("camBigBtn").classList.add("recording");
+  document.getElementById("recIndicator").style.display="flex";
+}
+
+function stopRec(){
+  if(mediaRec&&mediaRec.state!=="inactive")mediaRec.stop();
+  recOn=false;
+  document.getElementById("btnRec").textContent=t("cam_record");
+  document.getElementById("btnRec").className="btn btn-orange";
+  document.getElementById("camBigBtn").classList.remove("recording");
+  document.getElementById("recIndicator").style.display="none";
+}
+
+function onRecStop(){
+  const blob = new Blob(recChunks, {type:"video/webm"});
+  window._recBlob = blob;
+  const url = URL.createObjectURL(blob);
+  document.getElementById("recVid").src = url;
+  document.getElementById("dlVid").href = url;
+  document.getElementById("recPreview").style.display = "block";
+  toast("Recording ready — click Save as Session to upload","info");
+}
+
+async function captureAndAnalyze(){
+  if(!camVid.videoWidth){toast("Camera not active","err");return;}
+  const c = document.createElement("canvas");
+  c.width = camVid.videoWidth; c.height = camVid.videoHeight;
+  c.getContext("2d").drawImage(camVid, 0, 0);
+  c.toBlob(async blob => {
+    uShow(1, 20, "Uploading captured frame…");
+    const resultEl = _getResultContainer();
+    if(resultEl) resultEl.innerHTML = "";
+    const updateToStep2 = setTimeout(()=>uShow(2, 55, "Running AI segmentation…"), 600);
+    const form = new FormData();
+    form.append("file", blob, "capture_"+Date.now()+".jpg");
+    try{
+      const r = await fetch("/api/demo/session/from_image", {method:"POST", body:form});
+      clearTimeout(updateToStep2);
+      const d = await r.json();
+      if(d.ok){
+        const aiRes = d.session.ai_result;
+        uShow(3, 100, aiRes&&!aiRes.error ? `AI complete — Grade ${aiRes.grade}/6` : "Session saved");
+        demo = d.data;
+        activeSessionId = d.session.id;
+        renderAll();
+        const res2 = document.getElementById("addAnalysisResult") || document.getElementById("emptyAnalysisResult");
+        if(res2 && aiRes && !aiRes.error) res2.innerHTML = buildSegResultFromStored(aiRes, d.session.id);
+        else if(res2 && aiRes && aiRes.error) res2.innerHTML = `<div style="padding:12px;color:var(--red);font-size:13px;border:1px solid #fca5a5;border-radius:var(--r-sm)">${esc(aiRes.error)}</div>`;
+      } else {
+        uError(d.error||"Upload failed");
+      }
+    }catch(e){
+      uError(e.message);
+    }
+  }, "image/jpeg", 0.92);
+}
+
+async function saveRecording(){
+  if(!window._recBlob){toast("No recording available","err");return;}
+  uShow(1, 30, "Uploading video recording…");
+  const btn = document.querySelector('[onclick="saveRecording()"]');
+  if(btn){btn.textContent="Uploading…";btn.disabled=true;}
+  const form = new FormData();
+  form.append("file", window._recBlob, "recording_"+Date.now()+".webm");
+  try{
+    const r = await fetch("/api/demo/session/from_video", {method:"POST", body:form});
+    const d = await r.json();
+    if(d.ok){
+      uShow(3, 100, "Video saved — Block 1 pending");
+      demo = d.data;
+      activeSessionId = d.session.id;
+      renderAll();
+      document.getElementById("recPreview").style.display = "none";
+      window._recBlob = null;
+    } else {
+      uError(d.error||"Upload failed");
+    }
+  }catch(e){
+    toast("Upload error: "+e.message,"err");
+  }finally{
+    if(btn){btn.textContent=t("cam_save_recording");btn.disabled=false;}
+  }
+}
+
+function handleFileDrop(event){
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  if(files.length) _processUploadedFile(files[0]);
+}
+
+async function handleFileUpload(input){
+  if(!input.files.length) return;
+  await _processUploadedFile(input.files[0]);
+  input.value = "";
+}
+
+function _getResultContainer(){
+  const sessions = demo.sessions||[];
+  if(!sessions.length) return document.getElementById("emptyAnalysisResult");
+  return document.getElementById("addAnalysisResult");
+}
+
+// ── Upload status helpers ─────────────────────────────────────────────────────
+let _uHideTimer = null;
+function uShow(step, barPct, titleText){
+  const el = document.getElementById("uploadStatus");
+  if(!el) return;
+  el.classList.remove("hidden");
+  document.getElementById("ustatusTitle").textContent = titleText;
+  document.getElementById("ustatusBar").style.width = barPct + "%";
+  // steps: 1=uploading, 2=ai, 3=done
+  ["uStep1","uStep2","uStep3"].forEach((id,i)=>{
+    const s=document.getElementById(id);
+    s.classList.remove("active","done");
+    if(i+1 < step) s.classList.add("done");
+    else if(i+1 === step) s.classList.add("active");
+  });
+  ["uConn1","uConn2"].forEach((id,i)=>{
+    const c=document.getElementById(id);
+    c.classList.toggle("done", i+1 < step);
+  });
+  const spinner=document.getElementById("ustatusSpinner");
+  if(step===3){
+    spinner.style.borderTopColor="var(--green)";
+    spinner.style.animation="none";
+    spinner.style.border="2px solid var(--green)";
+    spinner.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><polyline points="20 6 9 17 4 12"/></svg>`;
+    spinner.style.background="var(--green)";
+    spinner.style.position="relative";
+    // auto-hide after 3s
+    if(_uHideTimer) clearTimeout(_uHideTimer);
+    _uHideTimer = setTimeout(()=>uHide(), 3000);
+  } else {
+    spinner.style.cssText="width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;";
+    spinner.innerHTML="";
+    spinner.style.background="";
+    spinner.style.position="";
+  }
+}
+function uHide(){
+  const el=document.getElementById("uploadStatus");
+  if(el) el.classList.add("hidden");
+}
+function uError(msg){
+  const el=document.getElementById("uploadStatus");
+  if(!el) return;
+  el.classList.remove("hidden");
+  document.getElementById("ustatusTitle").textContent = "Error: "+msg;
+  document.getElementById("ustatusBar").style.width="100%";
+  document.getElementById("ustatusBar").style.background="var(--red)";
+  const spinner=document.getElementById("ustatusSpinner");
+  spinner.style.cssText="width:14px;height:14px;flex-shrink:0;color:var(--red);";
+  spinner.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  if(_uHideTimer) clearTimeout(_uHideTimer);
+  _uHideTimer = setTimeout(()=>uHide(), 5000);
+}
+
+async function _processUploadedFile(file){
+  const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|avi|mkv)$/i.test(file.name);
+  const isImage = file.type.startsWith("image/") || /\.(jpe?g|png|bmp|tiff?|webp|heic|heif)$/i.test(file.name);
+  if(!isImage && !isVideo){toast("Unsupported file type","err");return;}
+
+  // Step 1: Uploading
+  uShow(1, 20, isImage ? "Uploading image…" : "Uploading video…");
+  const resultEl = _getResultContainer();
+  if(resultEl) resultEl.innerHTML = "";
+
+  const form = new FormData();
+  form.append("file", file);
+  const endpoint = isImage ? "/api/demo/session/from_image" : "/api/demo/session/from_video";
+  try{
+    // Step 2: AI running (set immediately after upload starts, since server runs AI server-side)
+    // We update to step 2 after a short delay to signal upload done → AI running
+    const updateToStep2 = setTimeout(()=>{
+      if(isImage) uShow(2, 55, "Running AI segmentation… (first run ~30s)");
+    }, 800);
+
+    const r = await fetch(endpoint, {method:"POST", body:form});
+    clearTimeout(updateToStep2);
+
+    const d = await r.json();
+    if(d.ok){
+      // Step 3: Done
+      const aiRes = isImage ? d.session.ai_result : null;
+      const hasAI = aiRes && !aiRes.error;
+      uShow(3, 100, isImage
+        ? (hasAI ? `AI complete — Grade ${aiRes.grade}/6 detected` : "Session saved (no AI result)")
+        : "Video saved — Block 1 pending");
+
+      demo = d.data;
+      activeSessionId = d.session.id;
+      renderAll();
+
+      const res2 = document.getElementById("addAnalysisResult") || document.getElementById("emptyAnalysisResult");
+      if(isImage && res2){
+        if(hasAI){
+          res2.innerHTML = buildSegResultFromStored(aiRes, d.session.id);
+        } else if(aiRes && aiRes.error){
+          res2.innerHTML = `<div style="padding:12px;color:var(--red);font-size:13px;border:1px solid #fca5a5;border-radius:var(--r-sm)">${esc(aiRes.error)}</div>`;
+        }
+      } else if(!isImage && res2){
+        res2.innerHTML = `<div style="padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;color:var(--muted)">${t('video_block1_pending')}</div>`;
+      }
+    } else {
+      uError(d.error || "Upload failed");
+    }
+  }catch(e){
+    uError(e.message);
+  }
+}
+
+// ── Models ────────────────────────────────────────────────────────────────────
+let _pollTimer  = null;
+let _pollCount  = 0;
+let _progTimer  = null;
+let _currentModelId = "";
+
+async function loadModels(){
+  try{
+    const r=await fetch("/api/demo/models");
+    const d=await r.json();
+    const sel=document.getElementById("modelSel");
+    const models=d.models||[];
+    if(models.length===0){
+      sel.innerHTML=`<option value="">No model available on server</option>`;
+      setStatus("error","No model available on server");
+      return;
+    }
+    sel.innerHTML="";
+    models.forEach(m=>{
+      const o=document.createElement("option");
+      o.value=m.id;o.textContent=m.name||(m.id);
+      sel.appendChild(o);
+    });
+    // Auto-select first model
+    sel.selectedIndex=0;
+    onModelChange();
+  }catch{
+    const sel=document.getElementById("modelSel");
+    if(sel) sel.innerHTML=`<option value="">No model available on server</option>`;
+    setStatus("error","No model available on server");
+  }
+}
+
+function setStatus(state, text){
+  const el=document.getElementById("chatStatus");
+  if(!el)return;
+  const col={ready:"var(--green)",ai:"var(--teal)",error:"var(--red)",loading:"var(--amber)"}[state]||"var(--muted)";
+  el.innerHTML=`<span class="online-dot" style="background:${col}"></span> ${text}`;
+}
+
+function showBanner(type, msg){
+  const banner=document.getElementById("modelBanner");
+  const txt   =document.getElementById("modelErrText");
+  const spin  =document.getElementById("bannerSpinner");
+  const stopB =document.getElementById("bannerStopBtn");
+  const prog  =document.getElementById("launchProgress");
+  if(!banner)return;
+  banner.style.display="flex";
+  txt.textContent=msg;
+  if(type==="loading"||type==="started"){
+    banner.style.background="#fffbeb";banner.style.borderColor="#fde68a";
+    txt.style.color="#92400e";spin.style.display="block";
+    stopB.style.display=(type==="started")?"block":"none";
+    prog.style.display="block";
+  }else if(type==="error"){
+    banner.style.background="#fff1f2";banner.style.borderColor="#fecdd3";
+    txt.style.color="#be123c";spin.style.display="none";
+    stopB.style.display="none";prog.style.display="none";
+  }
+}
+
+function hideBanner(){
+  const b=document.getElementById("modelBanner");
+  if(b)b.style.display="none";
+  clearProgress();
+}
+
+function showModelError(msg, modelId){
+  showBanner("error", msg);
+  setStatus("error","Model offline");
+  const lb = document.getElementById("bannerLogBtn");
+  if(lb){ lb.style.display = modelId ? "block" : "none"; lb.dataset.mid = modelId||""; }
+}
+function clearModelError(){hideBanner();}
+
+async function toggleModelLog(){
+  const pre = document.getElementById("modelLog");
+  const btn = document.getElementById("bannerLogBtn");
+  if(!pre) return;
+  if(pre.style.display !== "none"){ pre.style.display="none"; btn.textContent="View Log"; return; }
+  const mid = btn.dataset.mid;
+  pre.textContent = "Loading log…"; pre.style.display = "block"; btn.textContent="Hide Log";
+  try{
+    const r = await fetch(`/api/demo/model/${encodeURIComponent(mid)}/log`);
+    const d = await r.json();
+    pre.textContent = d.log || "(empty log)";
+    pre.scrollTop = pre.scrollHeight;
+  }catch(e){ pre.textContent = "Could not fetch log: " + e.message; }
+}
+
+function startProgress(){
+  let v=5;document.getElementById("launchBar").style.width="5%";
+  _progTimer=setInterval(()=>{if(v<82){v+=Math.random()*2.5;document.getElementById("launchBar").style.width=v+"%";}},900);
+}
+function clearProgress(){
+  clearInterval(_progTimer);_progTimer=null;
+  document.getElementById("launchBar").style.width="0%";
+}
+function finishProgress(){
+  clearInterval(_progTimer);
+  document.getElementById("launchBar").style.width="100%";
+  setTimeout(clearProgress,600);
+}
+
+function stopPoll(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
+
+function pollUntilReady(modelId, modelName){
+  stopPoll();_pollCount=0;
+  _pollTimer=setInterval(async()=>{
+    _pollCount++;
+    if(_pollCount>90){
+      stopPoll();
+      showModelError("Model took too long to start — click View Log for details.", modelId);
+      return;
+    }
+    try{
+      const r=await fetch(`/api/demo/model/${encodeURIComponent(modelId)}/status`);
+      const d=await r.json();
+      if(d.status==="ready"){
+        stopPoll();finishProgress();hideBanner();
+        setStatus("ai",modelName);
+        toast(`${modelName} is ready`,"ok");
+        _currentModelId=modelId;
+        _lastRecommKey=""; renderAssess();
+      }else if(d.status==="offline"&&!d.managed){
+        stopPoll();showModelError("Model process crashed — click View Log for details.", modelId);
+      }else{
+        const sec=_pollCount*2;
+        document.getElementById("modelErrText").textContent=
+          `Loading ${modelName}… (${sec}s — MLX models take 30–90s on first run)`;
+      }
+    }catch{}
+  },2000);
+}
+
+async function onModelChange(){
+  const sel =document.getElementById("modelSel");
+  const id  =sel.value;
+  const name=sel.selectedOptions[0]?.textContent||"Model";
+  stopPoll();hideBanner();
+  if(!id){setStatus("ready","No model selected");_currentModelId="";return;}
+
+  setStatus("loading","Launching…");
+  showBanner("loading",`Starting ${name}…`);
+  startProgress();
+
+  try{
+    const r=await fetch(`/api/demo/model/${encodeURIComponent(id)}/launch`,{method:"POST"});
+    const d=await r.json();
+    if(!d.ok){showModelError(d.error||"Failed to launch model.", id);return;}
+    if(d.status==="ready"){
+      finishProgress();hideBanner();
+      setStatus("ai",name);toast(`${name} is ready`,"ok");
+      _currentModelId=id;
+      _lastRecommKey=""; renderAssess();
+    }else{
+      showBanner("started",`Loading ${name}… (30–90s on first run)`);
+      pollUntilReady(id,name);
+    }
+  }catch(e){showModelError(`Network error: ${e.message}`);}
+}
+
+async function stopModel(){
+  const id=document.getElementById("modelSel").value||_currentModelId;
+  if(!id)return;
+  stopPoll();
+  await fetch(`/api/demo/model/${encodeURIComponent(id)}/stop`,{method:"POST"}).catch(()=>{});
+  hideBanner();setStatus("ready","Stopped");toast("Model stopped","info");
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function quickAsk(el){document.getElementById("chatIn").value=el.dataset.msg||el.textContent;sendChat();}
+
+async function sendChat(){
+  const inp=document.getElementById("chatIn");
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value="";inp.style.height="";
+  appendMsg(msg,"user");
+
+  // Animated typing indicator
+  const typing=document.createElement("div");
+  typing.className="msg bot";typing.id="typing-indicator";
+  typing.style.padding="10px 14px";
+  typing.innerHTML=`
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>`;
+  const msgs=document.getElementById("chatMsgs");
+  msgs.appendChild(typing);
+  msgs.scrollTop=1e9;
+
+  const sessions=demo.sessions||[];
+  const latest=sessions.length?sessions[sessions.length-1]:{};
+  const modelId=document.getElementById("modelSel").value;
+  try{
+    const r=await fetch("/api/demo/chat",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:msg,patient:demo.patient||{},latest_session:latest,all_sessions:demo.sessions||[],model_id:modelId,mode:"chat"})
+    });
+    const d=await r.json();
+    typing.remove();
+    if(d.model_error && d.model_error!=="no_model"){
+      showModelError(d.model_error);
+    } else if(d.model && d.model!=="rule-based"){
+      hideBanner();
+    }
+    // No model selected
+    if(!d.reply && d.model_error==="no_model"){
+      appendMsg("Please select and launch an AI model from the sidebar to use the chatbot.","bot");
+      const lbl=document.createElement("div");lbl.className="msg-model";
+      lbl.innerHTML=`<span style="color:var(--muted);font-size:10px">no model selected</span>`;
+      msgs.appendChild(lbl);
+    } else if(!d.reply){
+      const errTxt = d.model_error ? `Model error: ${d.model_error}` : "No response from model.";
+      appendMsg(errTxt,"bot");
+    } else {
+      appendMsg(d.reply,"bot");
+      const modelLabel=document.createElement("div");
+      modelLabel.className="msg-model";
+      if(d.model && d.model!=="rule-based"){
+        modelLabel.innerHTML=`via <span class="model-badge">${esc(d.model)}</span>`;
+        setStatus("ai",d.model);
+      } else if(d.model_error){
+        modelLabel.innerHTML=`<span style="color:var(--red);font-size:10px">⚠ model failed</span>`;
+      }
+      msgs.appendChild(modelLabel);
+    }
+  }catch{
+    typing.remove();
+    appendMsg("Network error — could not reach assistant.","bot");
+  }
+  msgs.scrollTop=1e9;
+}
+
+function appendMsg(text,role){
+  const msgs=document.getElementById("chatMsgs");
+  const div=document.createElement("div");
+  div.className="msg "+role;
+  div.innerHTML=text.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+  msgs.appendChild(div);
+  msgs.scrollTop=1e9;
+}
+
+document.getElementById("chatIn").addEventListener("input",function(){
+  this.style.height="";this.style.height=Math.min(this.scrollHeight,88)+"px";
+});
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeLb();closePtModal();closeNewSessModal();}
+});
+
+// ── Chat panel resize (mobile drag handle) ────────────────────────────────────
+(function(){
+  const handle  = document.getElementById("chatResizeHandle");
+  const sidebar = document.getElementById("chatSidebar");
+  if(!handle || !sidebar) return;
+
+  const MIN_H = 180, STORAGE_KEY = "chatPanelH";
+  let startY = 0, startH = 0, dragging = false;
+
+  function maxH(){ return Math.round(window.visualViewport ? window.visualViewport.height * 0.88 : window.innerHeight * 0.88); }
+
+  function applyH(h){
+    const clamped = Math.min(maxH(), Math.max(MIN_H, h));
+    sidebar.style.height = clamped + "px";
+    return clamped;
+  }
+
+  function onStart(e){
+    if(window.innerWidth > 900) return;
+    const t = e.touches ? e.touches[0] : e;
+    startY = t.clientY;
+    startH = sidebar.offsetHeight;
+    dragging = true;
+    handle.classList.add("dragging");
+    document.addEventListener("touchmove", onMove, {passive:false});
+    document.addEventListener("touchend",  onEnd,  {passive:true});
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup",   onEnd);
+  }
+
+  function onMove(e){
+    if(!dragging) return;
+    e.preventDefault();
+    const t = e.touches ? e.touches[0] : e;
+    applyH(startH + (startY - t.clientY));   // drag up → taller
+  }
+
+  function onEnd(){
+    dragging = false;
+    handle.classList.remove("dragging");
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend",  onEnd);
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup",   onEnd);
+    localStorage.setItem(STORAGE_KEY, sidebar.offsetHeight);
+  }
+
+  handle.addEventListener("touchstart", onStart, {passive:true});
+  handle.addEventListener("mousedown",  onStart);
+
+  // Restore saved height on mobile
+  const saved = parseInt(localStorage.getItem(STORAGE_KEY));
+  if(saved && window.innerWidth <= 900) applyH(saved);
+
+  // Re-clamp if window resizes (orientation change)
+  window.addEventListener("resize", ()=>{
+    if(sidebar.style.height) applyH(parseInt(sidebar.style.height));
+  });
+}());
+
+// ── iOS virtual keyboard — scroll chat input into view when keyboard opens ────
+(function(){
+  const inp = document.getElementById("chatIn");
+  if(!inp) return;
+
+  function scrollInputIntoView(){
+    // Small delay lets iOS finish animating the keyboard
+    setTimeout(()=>{
+      inp.scrollIntoView({behavior:"smooth", block:"nearest"});
+      const msgs = document.getElementById("chatMsgs");
+      if(msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 120);
+  }
+
+  // visualViewport fires when keyboard appears/disappears
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize", ()=>{
+      if(document.activeElement === inp) scrollInputIntoView();
+    });
+  }
+
+  // Fallback: also handle focus event directly
+  inp.addEventListener("focus", ()=>{
+    if(/iPhone|iPad|iPod/i.test(navigator.userAgent)) scrollInputIntoView();
+  });
+}());
+
+// ── AI Segmentation ───────────────────────────────────────────────────────────
+const SEG_GRADE = [
+  {name:"DTI",         col:"#6b21a8", bg:"#f3e8ff"},
+  {name:"Unstageable", col:"#475569", bg:"#f1f5f9"},
+  {name:"Stage 1",     col:"#ca8a04", bg:"#fef9c3"},
+  {name:"Stage 2",     col:"#ea580c", bg:"#ffedd5"},
+  {name:"Stage 3",     col:"#dc2626", bg:"#fee2e2"},
+  {name:"Stage 4",     col:"#9f1239", bg:"#ffe4e6"},
+  {name:"Stage 4+",    col:"#7c0000", bg:"#fdf2f8"},
+];
+const SEG_PALETTE = {
+  "Wound":"#ef4444","Suture":"#3b82f6","Inflammation":"#f97316",
+  "Necrosis":"#8b5cf6","Granulation":"#22c55e","Eschar":"#eab308",
+  "Slough":"#ec4899","Periwound":"#14b8a6","Scar":"#a78bfa",
+  "Normal Tissue":"#94a3b8","Edema":"#3e07d5","Reddish":"#276f7c",
+  "Staples":"#a3e635","Swellen":"#55c0d3","Bleeding":"#06b6d4",
+  "Discharge":"#e879f9","Maceration":"#b45309",
+};
+
+async function analyzeImage(sid, filename){
+  const resultEl=document.getElementById(`seg-res-${sid}`);
+  const btnId=`aibtn-${sid}-${encodeURIComponent(filename)}`;
+  const btn=document.getElementById(btnId);
+  if(btn){btn.textContent="…";btn.classList.add("loading");}
+  if(resultEl){
+    resultEl.innerHTML=`<div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface2)">
+      <div style="width:16px;height:16px;border:2px solid #e2e8f0;border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>
+      <span style="font-size:13px;color:var(--muted)">Running wound segmentation… (first call may take 10–30s while model loads)</span>
+    </div>`;
+  }
+  try{
+    const r=await fetch(`/api/demo/session/${encodeURIComponent(sid)}/segment/${encodeURIComponent(filename)}`);
+    const d=await r.json();
+    if(btn){btn.textContent="AI";btn.classList.remove("loading");}
+    if(d.error){
+      if(resultEl) resultEl.innerHTML=`<div style="padding:12px 18px;border-top:1px solid var(--border);color:var(--red);font-size:13px;background:#fff1f2;white-space:pre-wrap">${esc(d.error)}</div>`;
+      return;
+    }
+    if(resultEl) resultEl.innerHTML=buildSegResult(d, filename);
+  }catch(e){
+    if(btn){btn.textContent="AI";btn.classList.remove("loading");}
+    if(resultEl) resultEl.innerHTML=`<div style="padding:12px 18px;border-top:1px solid var(--border);color:var(--red);font-size:13px">Network error: ${esc(e.message)}</div>`;
+  }
+}
+
+function _buildDetectPanel(detect, sid){
+  if(!detect || detect.error) return "";
+  const areaM2 = detect.area_mm2 || 0;
+  const areaPx = detect.area_px || 0;
+  const ppm    = detect.pixel_per_mm || 10;
+  const overlayUrl = detect.overlay_filename
+    ? `/api/demo/session/${encodeURIComponent(sid)}/overlay/${encodeURIComponent(detect.overlay_filename)}`
+    : null;
+  return `<div style="border-top:2px solid #22c55e;padding:14px 18px;background:#f0fdf4;margin-top:2px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#16a34a">Block 1 — Wound Detection</div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:${overlayUrl?'12px':'0'};">
+      <div>
+        <div style="font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Wound Area</div>
+        <div style="font-size:20px;font-weight:700;color:#15803d;font-family:'JetBrains Mono',monospace">${areaM2.toLocaleString()} mm²</div>
+        <div style="font-size:10.5px;color:#6b7280;margin-top:2px">${areaPx.toLocaleString()} px &nbsp;·&nbsp; est. ${ppm}px/mm</div>
+      </div>
+    </div>
+    ${overlayUrl ? `<div>
+      <div style="font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Detection Overlay</div>
+      <img src="${overlayUrl}" style="width:100%;border-radius:7px;display:block;border:1px solid #bbf7d0">
+    </div>` : ""}
+    <div style="font-size:10.5px;color:#6b7280;margin-top:10px;padding-top:8px;border-top:1px solid #d1fae5;font-style:italic">
+      ⚠ Area is estimated — pixel/mm calibration (${ppm}px/mm) is assumed, not measured.
+    </div>
+  </div>`;
+}
+
+function _buildSegBody(d, overlayHtml, sid){
+  const g = Math.max(0, Math.min(6, d.grade));
+  const gi = SEG_GRADE[g];
+  const probs = d.grade_probs || {};
+  const probBars = Object.entries(probs).map(([gk,p]) => {
+    const pct = (p*100).toFixed(1);
+    const active = parseInt(gk) === g;
+    const gi2 = SEG_GRADE[parseInt(gk)] || SEG_GRADE[0];
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+      <span style="font-size:10px;color:var(--muted);width:12px;text-align:right;font-family:'JetBrains Mono',monospace">${gk}</span>
+      <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;border-radius:3px;background:${active?gi2.col:'#cbd5e1'};transition:width .4s"></div>
+      </div>
+      <span style="font-size:10px;color:${active?gi2.col:'var(--muted)'};font-family:'JetBrains Mono',monospace;width:38px">${pct}%</span>
+    </div>`;
+  }).join("");
+  const classChips = (d.detected_classes||[]).map(cls => {
+    const col = SEG_PALETTE[cls] || "#64748b";
+    return `<span style="display:inline-flex;align-items:center;gap:4px;background:${col}22;border:1px solid ${col}55;border-radius:10px;padding:2px 9px;font-size:11px;font-weight:500;color:${col}">${esc(cls)}</span>`;
+  }).join(" ");
+  return `<div style="border-top:2px solid var(--teal-mid);padding:14px 18px;background:var(--surface2);margin-top:2px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal)">Block 2 — Wound Analysis</div>
+      <span style="background:${gi.bg};color:${gi.col};border-radius:20px;padding:3px 13px;font-size:12.5px;font-weight:700">Grade ${g}/6 — ${gi.name}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start;">
+      <div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Grade Confidence</div>
+        ${probBars}
+      </div>
+      <div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Detected Tissues (${(d.detected_classes||[]).length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${classChips||'<span style="color:var(--muted);font-size:12px">None detected</span>'}</div>
+      </div>
+    </div>
+    ${overlayHtml}
+    <div style="font-size:10.5px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-style:italic">
+      ⚠ Experimental model — grade scale 0–6 (vs 0–5 above). Not for clinical use.
+    </div>
+  </div>`;
+}
+
+function buildSegResult(d, filename){
+  const overlayHtml = d.overlay_png_base64
+    ? `<div style="margin-top:12px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Segmentation Overlay</div>
+        <img src="data:image/png;base64,${d.overlay_png_base64}" style="width:100%;border-radius:7px;display:block;border:1px solid var(--border)">
+      </div>`
+    : "";
+  return _buildSegBody(d, overlayHtml, "");
+}
+
+function buildSegResultFromStored(ai, sid){
+  const detectHtml = _buildDetectPanel(ai.detect, sid);
+  const overlayHtml = ai.overlay_filename
+    ? `<div style="margin-top:12px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Segmentation Overlay</div>
+        <img src="/api/demo/session/${encodeURIComponent(sid)}/overlay/${encodeURIComponent(ai.overlay_filename)}" style="width:100%;border-radius:7px;display:block;border:1px solid var(--border)">
+      </div>`
+    : "";
+  return detectHtml + _buildSegBody(ai, overlayHtml, sid);
+}
+
+// ── Session CRUD ──────────────────────────────────────────────────────────────
+function openNewSessModal(){
+  document.getElementById("nsDate").value=new Date().toISOString().split("T")[0];
+  document.getElementById("nsGrade").value="";
+  document.getElementById("nsWidth").value="";
+  document.getElementById("nsHeight").value="";
+  document.getElementById("nsNotes").value="";
+  document.getElementById("newSessModal").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("nsGrade").focus(),60);
+}
+function closeNewSessModal(){document.getElementById("newSessModal").classList.add("hidden");}
+document.getElementById("newSessModal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeNewSessModal();});
+
+async function saveNewSession(){
+  const date  =document.getElementById("nsDate").value;
+  const grade =parseInt(document.getElementById("nsGrade").value)||0;
+  const width =parseFloat(document.getElementById("nsWidth").value)||0;
+  const height=parseFloat(document.getElementById("nsHeight").value)||0;
+  const notes =document.getElementById("nsNotes").value.trim();
+  try{
+    const r=await fetch("/api/demo/session/add",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({date,grade,wound_width:width,wound_height:height,notes})
+    });
+    const d=await r.json();
+    if(d.ok){demo=d.data;activeSessionId=d.session.id;closeNewSessModal();renderAll();toast("Session added","ok");}
+    else toast("Failed to add session","err");
+  }catch{toast("Network error","err");}
+}
+
+async function deleteSession(sid){
+  if(!confirm("Delete this session and all its images?"))return;
+  try{
+    const r=await fetch(`/api/demo/session/${encodeURIComponent(sid)}`,{method:"DELETE"});
+    const d=await r.json();
+    if(d.ok){
+      demo=d.data;
+      if(activeSessionId===sid){
+        activeSessionId=demo.sessions&&demo.sessions.length?demo.sessions[demo.sessions.length-1].id:null;
+      }
+      renderAll();toast("Session deleted","ok");
+    }else toast("Failed to delete session","err");
+  }catch{toast("Network error","err");}
+}
+
+async function uploadSessionImages(sid,input){
+  if(!input.files.length)return;
+  const form=new FormData();
+  for(const f of input.files)form.append("files",f);
+  toast("Uploading…","info");
+  try{
+    const r=await fetch(`/api/demo/session/${encodeURIComponent(sid)}/upload`,{method:"POST",body:form});
+    const d=await r.json();
+    if(d.ok){demo=d.data;renderAll();toast(`${d.saved.length} image(s) uploaded`,"ok");}
+    else toast("Upload failed","err");
+  }catch{toast("Upload error","err");}
+  input.value="";
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+applyLang();
+load();
+
+// ── Column resize ─────────────────────────────────────────────────────────────
+(function(){
+  const LP_KEY='ow_left_w', SB_KEY='ow_right_w';
+  const LP_MIN=160, LP_MAX=420, SB_MIN=220, SB_MAX=560;
+  const lp=document.querySelector('.left-panel');
+  const sb=document.getElementById('chatSidebar');
+
+  // Restore saved widths
+  const sw=localStorage.getItem(LP_KEY), sr=localStorage.getItem(SB_KEY);
+  if(sw) lp.style.width=sw+'px';
+  if(sr) sb.style.width=sr+'px';
+
+  function initHandle(handle, getW, setW){
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      const startX=e.clientX, startW=getW();
+      handle.classList.add('dragging');
+      document.body.style.cursor='col-resize';
+      document.body.style.userSelect='none';
+      let pending=null;
+      function onMove(e){
+        const dx=e.clientX-startX;
+        if(pending) return;
+        pending=requestAnimationFrame(()=>{setW(startW+dx);pending=null;});
+      }
+      function onUp(){
+        if(pending){cancelAnimationFrame(pending);pending=null;}
+        handle.classList.remove('dragging');
+        document.body.style.cursor='';
+        document.body.style.userSelect='';
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      }
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  }
+
+  initHandle(
+    document.getElementById('resizeLeft'),
+    ()=>lp.offsetWidth,
+    w=>{const c=Math.max(LP_MIN,Math.min(LP_MAX,w));lp.style.width=c+'px';localStorage.setItem(LP_KEY,c);}
+  );
+  initHandle(
+    document.getElementById('resizeRight'),
+    ()=>sb.offsetWidth,
+    w=>{const c=Math.max(SB_MIN,Math.min(SB_MAX,w));sb.style.width=c+'px';localStorage.setItem(SB_KEY,c);}
+  );
+
+  // Double-click → reset to default
+  document.getElementById('resizeLeft').addEventListener('dblclick',()=>{
+    lp.style.width='252px'; localStorage.removeItem(LP_KEY);
+  });
+  document.getElementById('resizeRight').addEventListener('dblclick',()=>{
+    sb.style.width='330px'; localStorage.removeItem(SB_KEY);
+  });
+})();
+</script>
+</body>
+</html>
